@@ -1,0 +1,48 @@
+version: "3.9"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app_python  # Nombre personalizado para el contenedor de la aplicación
+    volumes:
+      - ./app:/app  # Monta el código para desarrollo en caliente
+    ports:
+      - "5000:5000"  # Exposición para Flask o FastAPI
+    depends_on:
+      - db  # Garantiza que la base de datos se inicie antes
+    restart: always  # Reinicio automático en caso de error
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=secret
+      - DB_NAME=mi_base
+
+  db:
+    image: mysql:8.0  # Usa la imagen oficial de MySQL
+    container_name: mysql_python  # Nombre personalizado para el contenedor de MySQL
+    restart: always  # Reinicio automático en caso de error
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: mi_base
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3305:3306"  # Host:Container
+    volumes:
+      - db_data:/var/lib/mysql  # Volumen para persistencia de datos
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin  # Imagen oficial de phpMyAdmin
+    container_name: phpmyadmin_python  # Nombre personalizado para el contenedor de phpMyAdmin
+    restart: always  # Reinicio automático en caso de error
+    depends_on:
+      - db  # Asegura que MySQL esté disponible antes de iniciar phpMyAdmin
+    ports:
+      - "8080:80"  # Exposición del puerto 8080 para phpMyAdmin
+    environment:
+      PMA_HOST: db  # Conecta phpMyAdmin al servicio MySQL
+      PMA_PORT: 3306  # Puerto de MySQL dentro del contenedor
+
+volumes:
+  db_data:

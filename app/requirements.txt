@@ -1,0 +1,5 @@
+mysql-connector-python
+flask
+python-dotenv
+selenium
+webdriver-manager
