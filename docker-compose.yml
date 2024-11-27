@@ -8,7 +8,7 @@ services:
     volumes:
       - ./app:/app  # Monta el código para desarrollo en caliente
     ports:
-      - "5000:5000"  # Exposición para Flask o FastAPI
+      - "5001:5000"  # Exposición para Flask o FastAPI
     depends_on:
       - db  # Garantiza que la base de datos se inicie antes
     restart: always  # Reinicio automático en caso de error
