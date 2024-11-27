@@ -28,4 +28,3 @@ def enviar_mensaje_telegram(mensaje):
     except requests.exceptions.RequestException as e:
         print(f"Excepción al enviar el mensaje: {e}")
 
-enviar_mensaje_telegram("¡Hola! Soy Entradas")
