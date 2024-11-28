@@ -1,6 +1,5 @@
-import os
-import time
 from flask import Flask, jsonify
+import re
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -13,8 +12,16 @@ def setup_driver():
     service = Service(ChromeDriverManager().install())
     options = Options()
     options.add_argument("--window-size=1250,850")
-    options.add_argument("--headless")  
+    options.add_argument("--headless")
     return webdriver.Chrome(service=service, options=options)
+
+def normalize_price(price):
+    """
+    Normaliza el precio eliminando caracteres no numéricos excepto el punto.
+    Convierte el precio a un número flotante para consistencia.
+    """
+    price_cleaned = re.sub(r'[^\d]', '', price)  # Elimina caracteres no numéricos
+    return int(price_cleaned)
 
 def search_avo(driver):
     url = "https://www.avocoffeeroasters.com.ar/cafe--prod--1"
@@ -28,12 +35,11 @@ def search_avo(driver):
             print("No se encontraron precios o enlaces de productos.")
             return []
 
-        for idx, (span, product_link) in enumerate(zip(price_spans, product_links)):
+        for span, product_link in zip(price_spans, product_links):
             product_name = product_link.text
             product_href = product_link.get_attribute("href")
-            price = span.text
+            price = normalize_price(span.text)
 
-            # Agregar los datos al arreglo de productos
             products.append({
                 "name": product_name,
                 "price": price,
@@ -57,12 +63,11 @@ def search_delirante(driver):
             print("No se encontraron precios, nombres o enlaces de productos.")
             return []
 
-        for idx, (span, title, product_link) in enumerate(zip(price_spans, product_titles, product_links)):
+        for span, title, product_link in zip(price_spans, product_titles, product_links):
             product_name = title.text
             product_href = product_link.get_attribute("href")
-            price = span.text
+            price = normalize_price(span.text)
 
-            # Agregar los datos al arreglo de productos
             products.append({
                 "name": product_name,
                 "price": price,
@@ -75,30 +80,41 @@ def search_delirante(driver):
 
 @app.route('/preciosAvo', methods=['GET'])
 def precios_avo():
-    # Configurar el driver de Selenium
     driver = setup_driver()
-
     try:
         products = search_avo(driver)
         if products:
-            return jsonify(products), 200  # Devuelve los productos en formato JSON
+            return jsonify(products), 200
         else:
             return jsonify({"message": "No se encontraron productos en Avo."}), 404
     finally:
-        driver.quit()  
+        driver.quit()
 
 @app.route('/preciosDelirante', methods=['GET'])
 def precios_delirante():
     driver = setup_driver()
-
     try:
         products = search_delirante(driver)
         if products:
-            return jsonify(products), 200  # Devuelve los productos en formato JSON
+            return jsonify(products), 200
         else:
             return jsonify({"message": "No se encontraron productos en Café Delirante."}), 404
     finally:
-        driver.quit()  
+        driver.quit()
+
+@app.route('/productosCombinados', methods=['GET'])
+def productos_combinados():
+    driver = setup_driver()
+    try:
+        # Obtener productos de ambas rutas
+        avo_products = search_avo(driver)
+        delirante_products = search_delirante(driver)
+
+        # Combinar y devolver el resultado
+        all_products = avo_products + delirante_products
+        return jsonify(all_products), 200
+    finally:
+        driver.quit()
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5002)
