@@ -40,7 +40,7 @@ def setup_driver():
     service = Service(ChromeDriverManager().install())
     options = webdriver.ChromeOptions()
     options.add_argument("--window-size=1250,850")
-    options.add_argument("--headless")  # Ejecuta el navegador en modo headless (sin UI)
+    options.add_argument("--headless")  
     return Chrome(service=service, options=options)
 
 def login(driver):
@@ -58,17 +58,23 @@ def findMatch(driver):
         product_name = product.text.upper()
         if any(keyword in product_name for keyword in keywords):
             matching_count += 1
-            matching_products.append(product.text)  # Guardar el producto coincidente
+            matching_products.append(product.text)  
 
-    # Preparar el mensaje para Telegram
     if matching_count > 0:
-        mensaje = f"🎟️ <b>Se encontraron {matching_count} productos:</b>\n\n"
+        mensaje = (
+            f"🎟️ <b>¡Buenas noticias! Se encontraron {matching_count} entradas disponibles para River:</b>\n\n"
+        )
         for product in matching_products:
-            mensaje += f"- {product}\n"
+            mensaje += f"🔹 {product}\n"
+        mensaje += "\n⚡ <i>Asegúrate de obtenerlas antes de que se agoten.</i>"
     else:
-        mensaje = "❌ No se encontraron productos con las palabras clave."
+        mensaje = (
+            "❌ <b>No encontramos entradas disponibles para River en este momento.</b>\n\n"
+            "💡 <i>Recomendación:</i> Sigue consultando, ya que las entradas pueden reponerse. "
+            "También puedes verificar directamente en la plataforma oficial. 🏟️"
+        )
 
-    print(mensaje)  # Mostrar el mensaje en la consola
+    print(mensaje)  
     return mensaje
 
 def get_updates(offset=None):
@@ -78,16 +84,23 @@ def get_updates(offset=None):
     response = requests.get(url, params=params)
     return response.json()
 
+def obtener_ultimo_update_id():
+    """Obtiene el último update_id al iniciar el script para ignorar mensajes antiguos."""
+    updates = get_updates()
+    if updates.get('result'):
+        return updates['result'][-1]['update_id'] 
+    return None
+
 def process_message(message):
     """Procesa el mensaje recibido de Telegram."""
     try:
-        text = message.get('text', '')  # Usar get para evitar KeyError si no hay texto
+        text = message.get('text', '')  
         chat_id = message['chat']['id']
 
         # Normalizar el texto del mensaje
         text_lower = text.lower().strip()
 
-        # Comprobar comandos específicos
+
         if "hay entradas para river" in text_lower:
             driver = setup_driver()
             try:
@@ -99,7 +112,7 @@ def process_message(message):
         else:
             # Enviar una lista de comandos válidos
             comandos = (
-                "⚙️ Comandos válidos:\n"
+                "⚙️ <b>Comandos válidos:</b>\n"
                 "- <b>¿Hay entradas para River?</b>: Busca entradas relacionadas con River Plate.\n"
                 "- <b>Ayuda</b>: Muestra esta lista de comandos.\n"
             )
@@ -109,20 +122,22 @@ def process_message(message):
         enviar_mensaje_telegram("Hubo un error al procesar tu mensaje. Intenta de nuevo.", message['chat']['id'])
 
 def main():
-    offset = None
+    offset = obtener_ultimo_update_id()  # Ignorar mensajes antiguos
+    if offset:
+        offset += 1  # Comenzar con mensajes nuevos
+
     while True:
         try:
             updates = get_updates(offset)
-            if updates.get('result'):  # Verificar si hay actualizaciones
+            if updates.get('result'): 
                 for update in updates['result']:
-                    message = update.get('message', {})  # Obtener el mensaje, si existe
-                    if message:  # Solo procesar si hay un mensaje
-                        process_message(message)  # Procesar el mensaje
-                        offset = update['update_id'] + 1  # Actualizar el offset para evitar recibir el mismo mensaje repetidamente
-            time.sleep(1)  # Esperar antes de la siguiente consulta a Telegram
+                    message = update.get('message', {})  
+                    if message:  
+                        process_message(message)  
+                        offset = update['update_id'] + 1  
+            time.sleep(1) 
         except Exception as e:
             print(f"Error en el ciclo principal: {e}")
-            time.sleep(5)  # Esperar un poco antes de reintentar en caso de error
-
+            time.sleep(5)  
 if __name__ == "__main__":
     main()
