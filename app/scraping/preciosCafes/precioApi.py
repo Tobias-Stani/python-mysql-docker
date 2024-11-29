@@ -9,10 +9,13 @@ from webdriver_manager.chrome import ChromeDriverManager
 app = Flask(__name__)
 
 def setup_driver():
-    service = Service(ChromeDriverManager().install())
+    service = Service(ChromeDriverManager(version="131.0.6778.85").install())
     options = Options()
-    options.add_argument("--window-size=1250,850")
-    options.add_argument("--headless")
+    options.add_argument("--headless")  # Ejecutar en modo headless
+    options.add_argument("--no-sandbox")  # Deshabilitar el sandbox para evitar errores en contenedores
+    options.add_argument("--disable-dev-shm-usage")  # Evitar errores relacionados con la memoria compartida
+    options.add_argument("--remote-debugging-port=9222")  # Habilitar puerto de depuración remoto
+    options.add_argument("--disable-gpu")  # Deshabilitar la aceleración de GPU
     return webdriver.Chrome(service=service, options=options)
 
 def normalize_price(price):
