@@ -17,11 +17,11 @@ load_dotenv(dotenv_path='/home/tobi/develop/scraping/.env.local')  # Ajusta la r
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-def enviar_mensaje_telegram(mensaje):
+def enviar_mensaje_telegram(mensaje, chat_id=TELEGRAM_CHAT_ID):
     """Envía un mensaje al canal o chat de Telegram."""
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
-        'chat_id': TELEGRAM_CHAT_ID,
+        'chat_id': chat_id,
         'text': mensaje,
         'parse_mode': 'HTML'
     }
@@ -80,31 +80,49 @@ def get_updates(offset=None):
 
 def process_message(message):
     """Procesa el mensaje recibido de Telegram."""
-    text = message['text']
-    chat_id = message['chat']['id']
+    try:
+        text = message.get('text', '')  # Usar get para evitar KeyError si no hay texto
+        chat_id = message['chat']['id']
 
-    # Si el mensaje contiene "Hay entradas", buscar productos
-    if "hay entradas para river" in text.lower():
-        driver = setup_driver()
-        try:
-            login(driver)
-            mensaje = findMatch(driver)  # Obtener mensaje de coincidencias
-            enviar_mensaje_telegram(mensaje)  # Enviar mensaje a Telegram
-        finally:
-            driver.quit()
-    else:
-        enviar_mensaje_telegram("Por favor, pregúntame '¿Hay entradas?' para buscar productos.", chat_id)
+        # Normalizar el texto del mensaje
+        text_lower = text.lower().strip()
+
+        # Comprobar comandos específicos
+        if "hay entradas para river" in text_lower:
+            driver = setup_driver()
+            try:
+                login(driver)
+                mensaje = findMatch(driver)  # Obtener mensaje de coincidencias
+                enviar_mensaje_telegram(mensaje, chat_id)  # Enviar mensaje a Telegram
+            finally:
+                driver.quit()
+        else:
+            # Enviar una lista de comandos válidos
+            comandos = (
+                "⚙️ Comandos válidos:\n"
+                "- <b>¿Hay entradas para River?</b>: Busca entradas relacionadas con River Plate.\n"
+                "- <b>Ayuda</b>: Muestra esta lista de comandos.\n"
+            )
+            enviar_mensaje_telegram(comandos, chat_id)
+    except Exception as e:
+        print(f"Error al procesar el mensaje: {e}")
+        enviar_mensaje_telegram("Hubo un error al procesar tu mensaje. Intenta de nuevo.", message['chat']['id'])
 
 def main():
     offset = None
     while True:
-        updates = get_updates(offset)
-        if updates['result']:
-            for update in updates['result']:
-                message = update['message']
-                process_message(message)  # Procesar el mensaje
-                offset = update['update_id'] + 1  # Actualizar el offset para evitar recibir el mismo mensaje repetidamente
-        time.sleep(1)  # Esperar antes de la siguiente consulta a Telegram
+        try:
+            updates = get_updates(offset)
+            if updates.get('result'):  # Verificar si hay actualizaciones
+                for update in updates['result']:
+                    message = update.get('message', {})  # Obtener el mensaje, si existe
+                    if message:  # Solo procesar si hay un mensaje
+                        process_message(message)  # Procesar el mensaje
+                        offset = update['update_id'] + 1  # Actualizar el offset para evitar recibir el mismo mensaje repetidamente
+            time.sleep(1)  # Esperar antes de la siguiente consulta a Telegram
+        except Exception as e:
+            print(f"Error en el ciclo principal: {e}")
+            time.sleep(5)  # Esperar un poco antes de reintentar en caso de error
 
 if __name__ == "__main__":
     main()
