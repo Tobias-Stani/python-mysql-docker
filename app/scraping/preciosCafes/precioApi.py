@@ -9,7 +9,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 app = Flask(__name__)
 
 def setup_driver():
-    service = Service(ChromeDriverManager(version="131.0.6778.85").install())
+    service = Service(ChromeDriverManager().install())
     options = Options()
     options.add_argument("--headless")  # Ejecutar en modo headless
     options.add_argument("--no-sandbox")  # Deshabilitar el sandbox para evitar errores en contenedores
