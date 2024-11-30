@@ -1,6 +1,3 @@
-import os
-import time
-from dotenv import load_dotenv
 from flask import Flask, jsonify
 from selenium import webdriver
 from selenium.webdriver import Chrome
