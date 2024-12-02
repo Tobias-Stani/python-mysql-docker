@@ -106,6 +106,52 @@ def search_avo(driver):
 
     return products
 
+def search_puerto_blast(driver):
+    url = "https://cafepuertoblest.com/cafe-especial/?mpage=2"  
+    driver.get(url)
+    products = []
+
+    try:
+        # Buscar todos los productos en la página
+        product_elements = driver.find_elements(By.CSS_SELECTOR, "a.item-link")  # Encuentra todos los enlaces de productos
+
+        if not product_elements:
+            print("No se encontraron productos en la página.")
+            return []
+
+        for product_element in product_elements:
+            product_name = product_element.find_element(By.CSS_SELECTOR, "div.js-item-name").text  # Título
+            product_url = product_element.get_attribute("href")  # Enlace
+            price_element = product_element.find_element(By.CSS_SELECTOR, "span.js-price-display.item-price")  # Precio
+            price = normalize_price(price_element.text)  # Normaliza el precio
+
+            # Guardar los productos encontrados
+            products.append({
+                "name": product_name,
+                "price": price,
+                "url": product_url
+            })
+
+    except Exception as e:
+        print("Error al extraer información de la página:", e)
+
+    return products
+
+
+@app.route('/preciosPuertoBlest', methods=['GET'])
+def precios_puerto_blast():
+    driver = setup_driver()
+    try:
+        # Llamar a la función de scraping y obtener los productos
+        products = search_puerto_blast(driver)
+        if products:
+            return jsonify(products), 200  # Devuelve los productos en formato JSON
+        else:
+            return jsonify({"message": "No se encontraron productos en Café Puerto Blast."}), 404
+    finally:
+        driver.quit()  # Cerrar el driver una vez terminado el scraping
+
+
 @app.route('/preciosFuego', methods=['GET'])
 def precios_fuego():
     driver = setup_driver()
@@ -146,16 +192,22 @@ def precios_avo():
 def productos_combinados():
     driver = setup_driver()
     try:
-        # Obtener productos de todas las tiendas
+        # Obtener productos de todas las rutas
         fuego_products = search_coffee(driver)
         delirante_products = search_delirante(driver)
         avo_products = search_avo(driver)
+        puerto_blast_products = search_puerto_blast(driver)
 
-        # Combinar y devolver el resultado
-        all_products = fuego_products + delirante_products + avo_products
+        # Combinar todos los productos
+        all_products = fuego_products + delirante_products + avo_products + puerto_blast_products
+
+        # Añadir el campo 'id' autoincremental
+        for idx, product in enumerate(all_products, start=1):
+            product['id'] = idx  # Asignar un ID único
+
         return jsonify(all_products), 200
     finally:
-        driver.quit()
+        driver.quit()  # Cerrar el driver una vez terminado el scraping
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5002)
