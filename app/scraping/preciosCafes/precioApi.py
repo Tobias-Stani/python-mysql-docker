@@ -137,6 +137,55 @@ def search_puerto_blast(driver):
 
     return products
 
+def search_MomoTostadores(driver):
+    url = "https://momotostadores.com/"  
+    driver.get(url)
+    products = []
+
+    try:
+        # Buscar los enlaces de los productos
+        product_links = driver.find_elements(By.CSS_SELECTOR, "a.pp-loop-product__link")
+        price_elements = driver.find_elements(By.CSS_SELECTOR, "span.price > span.woocommerce-Price-amount.amount bdi")
+
+        if not product_links or not price_elements:
+            print("No se encontraron productos o precios en la página.")
+            return []
+
+        # Iterar sobre los productos encontrados
+        for product_link, price_element in zip(product_links, price_elements):
+            product_name = product_link.find_element(By.CSS_SELECTOR, "h3.woocommerce-loop-product__title").text
+            product_url = product_link.get_attribute("href")
+            price = price_element.text.strip()  # Obtener texto del precio desde el <bdi>
+
+            # Normalizar el precio
+            normalized_price = normalize_price(price)
+
+            # Guardar los productos encontrados
+            products.append({
+                "name": product_name,
+                "price": normalized_price,
+                "url": product_url
+            })
+
+    except Exception as e:
+        print(f"Error al extraer los productos de Momo Tostadores: {e}")
+
+    return products
+
+
+@app.route('/preciosMomo', methods=['GET'])
+def precios_Momo():
+    driver = setup_driver()
+    try:
+        # Llamar a la función de scraping y obtener los datos
+        products = search_MomoTostadores(driver)
+        if products:
+            return jsonify(products), 200  # Devuelve los productos en formato JSON
+        else:
+            return jsonify({"message": "No se encontraron productos."}), 404
+    finally:
+        driver.quit()  # Cerrar el driver una vez terminado el scraping
+
 
 @app.route('/preciosPuertoBlest', methods=['GET'])
 def precios_puerto_blast():
@@ -197,9 +246,10 @@ def productos_combinados():
         delirante_products = search_delirante(driver)
         avo_products = search_avo(driver)
         puerto_blast_products = search_puerto_blast(driver)
+        momo_tostadores = search_MomoTostadores(driver)
 
         # Combinar todos los productos
-        all_products = fuego_products + delirante_products + avo_products + puerto_blast_products
+        all_products = fuego_products + delirante_products + avo_products + puerto_blast_products + momo_tostadores
 
         # Añadir el campo 'id' autoincremental
         for idx, product in enumerate(all_products, start=1):
