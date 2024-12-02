@@ -34,7 +34,6 @@ if response.status_code == 200:
             "alto": max(precios)
         }
 
-    # Calcular estadísticas para cada categoría
     estadisticas = {}
     for categoria, lista in segmentados.items():
         estadisticas[categoria] = calcular_estadisticas(lista)
