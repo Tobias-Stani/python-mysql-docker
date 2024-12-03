@@ -101,9 +101,17 @@ Estoy aquí para ayudarte a encontrar los mejores cafés disponibles al precio q
             enviar_mensaje_telegram(mensaje_bienvenida, chat_id)
             return  # Detenemos aquí, ya que solo es un mensaje de bienvenida.
 
+        # Respuesta de agradecimiento
+        if "gracias" in text:
+            enviar_mensaje_telegram("🙏 ¡De nada! Estoy aquí para ayudarte. Si necesitas algo más, solo dímelo.", chat_id)
+            return
+        
+        # Confirmación de recibido
+        enviar_mensaje_telegram("🔎 Estoy buscando los mejores cafés para ti... Un momento. ☕", chat_id)
+
         text = text.replace("cafes", "cafe").replace("café", "cafe")
 
-        # Procesar otros comandos
+        # Procesar comandos reconocidos
         try:
             if "cafe entre" in text:
                 parts = text.split()
@@ -167,8 +175,8 @@ Estoy aquí para ayudarte a encontrar los mejores cafés disponibles al precio q
                 enviar_mensaje_telegram(response_message, chat_id)
 
             else:
-                # Si no se reconoce el comando, mostrar ayuda
-                mostrar_ayuda(chat_id)
+                # Mensaje para comandos no reconocidos
+                enviar_mensaje_telegram("❓ No reconozco ese comando. Escribe <b>/start</b> para ver los comandos disponibles o escribe 'ayuda'.", chat_id)
 
         except Exception as e:
             # Capturar cualquier error específico del procesamiento
