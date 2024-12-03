@@ -83,9 +83,27 @@ def process_message(message):
     try:
         text = unidecode(message.get('text', '').lower().strip())  # Normalizar el texto
         chat_id = message['chat']['id']
+        
+        # Mensaje de bienvenida
+        if text == "/start":
+            mensaje_bienvenida = """
+🤖 <b>¡Hola! Bienvenido al Bot de Precios de Café ☕</b>
+
+Estoy aquí para ayudarte a encontrar los mejores cafés disponibles al precio que necesitas.
+
+<b>Comandos básicos:</b>  
+- <b>"cafe mas barato"</b>: Encuentra los cafés más económicos.  
+- <b>"cafe mas caro"</b>: Descubre los cafés más costosos.  
+- <b>"cafe entre X y Y"</b>: Busca cafés dentro de un rango de precios.  
+
+💡 Usa el comando que más te guste o escribe "ayuda" para ver más detalles. ¡Disfruta! 🚀
+"""
+            enviar_mensaje_telegram(mensaje_bienvenida, chat_id)
+            return  # Detenemos aquí, ya que solo es un mensaje de bienvenida.
 
         text = text.replace("cafes", "cafe").replace("café", "cafe")
 
+        # Procesar otros comandos
         try:
             if "cafe entre" in text:
                 parts = text.split()
@@ -161,6 +179,8 @@ def process_message(message):
         # Capturar cualquier error general
         print(f"Error general al procesar el mensaje: {e}")
         enviar_mensaje_telegram("Hubo un error al procesar tu mensaje. Por favor, revisa los comandos disponibles.", message['chat']['id'])
+
+
 
 def get_updates(offset=None):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates"
