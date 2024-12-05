@@ -5,3 +5,6 @@ flask
 python-dotenv
 selenium
 webdriver-manager
+requests
+beautifulsoup4
+pandas

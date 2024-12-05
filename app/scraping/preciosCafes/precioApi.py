@@ -11,7 +11,9 @@ app = Flask(__name__)
 def setup_driver():
     service = Service(ChromeDriverManager().install())
     options = Options()
-    options.add_argument("--headless") 
+    options.add_argument("--headless")  # Ejecutar en modo sin cabeza
+    options.add_argument("--no-sandbox")  # Asegura que Chrome pueda ejecutarse en Docker
+    options.add_argument("--disable-dev-shm-usage")
     return webdriver.Chrome(service=service, options=options)
 
 
