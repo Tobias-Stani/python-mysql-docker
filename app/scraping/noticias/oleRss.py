@@ -12,7 +12,6 @@ def fetch_rss_feed(url):
     # Extraer los elementos <item>
     items = root.findall(".//item")  # Busca todos los nodos <item>
     for item in items:
-        # Extraer subelementos de cada <item>
         title = item.find("title").text
         description = item.find("description").text
         link = item.find("link").text
