@@ -9,7 +9,7 @@ load_dotenv(dotenv_path='/home/tobi/develop/scraping/.env.local')
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-COMBINED_URL = "http://172.27.0.3:5002/productosCombinados"
+COMBINED_URL = "http://192.168.1.10:5002/productosCombinados"
 
 def enviar_mensaje_telegram(mensaje, chat_id=TELEGRAM_CHAT_ID):
     """Envía un mensaje al canal o chat de Telegram."""
