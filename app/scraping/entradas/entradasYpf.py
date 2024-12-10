@@ -9,6 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import schedule  # Librería para programar tareas
 
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv(dotenv_path='/home/tobi/develop/scraping/.env.local')  
@@ -68,7 +69,8 @@ def findMatch(driver):
     
     return mensaje
 
-def main():
+def tarea():
+    """Ejecuta la tarea programada."""
     driver = setup_driver()  
     login(driver)  
     
@@ -78,8 +80,13 @@ def main():
     # Enviar el mensaje a Telegram
     enviar_mensaje_telegram(resultado)
 
-    time.sleep(5)  
-    driver.quit()  
+    driver.quit()  # Asegurarse de cerrar el navegador al finalizar la tarea
+
+# Configurar el cronograma con schedule
+schedule.every(1).hours.do(tarea)  # Ejecutar la tarea cada 1 hora
 
 if __name__ == "__main__":
-    main()
+    print("Iniciando el programador de tareas...")
+    while True:
+        schedule.run_pending()  # Ejecutar las tareas programadas
+        time.sleep(1)  # Evitar uso intensivo de CPU
