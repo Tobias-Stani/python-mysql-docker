@@ -142,17 +142,40 @@ def hacer_click_expediente(driver):
         return False
 
 def extraer_expediente(driver):
-    """Extrae el número de expediente de la página del expediente."""
+    """
+    Extrae datos generales (expediente, carátula, y dependencia) de la página web.
+    """
     try:
-        # Localizamos el contenedor del expediente usando la clase
+        # Diccionario para almacenar los datos extraídos
+        datos = {}
+
+        # Extraer expediente
         contenedor_expediente = driver.find_element(By.CLASS_NAME, "col-xs-10")
-        
-        # Buscamos el <span> que contiene el número de expediente
-        expediente = contenedor_expediente.find_element(By.TAG_NAME, "span").text
-        print(f"Expediente extraído: {expediente}")
-        return expediente
+        datos["expediente"] = contenedor_expediente.find_element(By.TAG_NAME, "span").text.strip()
+
+        # Extraer jurisdicción
+        jurisdiccion_contenedor = driver.find_element(By.ID, "expediente:j_idt90:detailCamera")
+        datos["jurisdiccion"] = jurisdiccion_contenedor.text.strip()
+
+        # Extraer dependencia
+        dependencia_contenedor = driver.find_element(By.ID, "expediente:j_idt90:detailDependencia")
+        datos["dependencia"] = dependencia_contenedor.text.strip()
+
+        # Extraer situación actual
+        situacion_contenedor = driver.find_element(By.ID, "expediente:j_idt90:detailSituation")
+        datos["situacion_actual"] = situacion_contenedor.text.strip()
+
+        # Extraer carátula
+        caratula_contenedor = driver.find_element(By.ID, "expediente:j_idt90:detailCover")
+        datos["caratula"] = caratula_contenedor.text.strip()
+
+        # Imprimir los datos extraídos para verificar
+        print(f"Datos extraídos: {datos}")
+
+        return datos
+
     except Exception as e:
-        print(f"Error al extraer el expediente: {e}")
+        print(f"Error al extraer los datos generales: {e}")
         return None
 
 def volver_a_tabla(driver):
