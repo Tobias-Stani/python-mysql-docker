@@ -120,6 +120,98 @@ def elementos_tabla(driver):
     print(f"Hay un total de {total_elementos} expedientes.")
     return total_elementos
 
+
+def hacer_click_expediente(driver):
+    """Hace clic en el ícono del expediente, utilizando la clase del ícono para acceder al expediente."""
+    try:
+        # Seleccionamos el ícono de "Ver" (fa-eye) usando su clase
+        icono_ver = driver.find_element(By.CLASS_NAME, "fa-eye")
+        
+        # Verificamos si el ícono es visible y habilitado
+        if icono_ver.is_displayed() and icono_ver.is_enabled():
+            icono_ver.click()
+            print("Se hizo clic en el expediente correctamente.")
+            return True
+        else:
+            print("El ícono de 'Ver' no está habilitado o visible.")
+            return False
+
+    except Exception as e:
+        print(f"Error al intentar hacer clic en el expediente: {e}")
+        return False
+
+def extraer_expediente(driver):
+    """Extrae el número de expediente de la página del expediente."""
+    try:
+        # Localizamos el contenedor del expediente usando la clase
+        contenedor_expediente = driver.find_element(By.CLASS_NAME, "col-xs-10")
+        
+        # Buscamos el <span> que contiene el número de expediente
+        expediente = contenedor_expediente.find_element(By.TAG_NAME, "span").text
+        print(f"Expediente extraído: {expediente}")
+        return expediente
+    except Exception as e:
+        print(f"Error al extraer el expediente: {e}")
+        return None
+
+def volver_a_tabla(driver):
+    """Hace clic en el botón de 'Volver' para regresar a la tabla de expedientes."""
+    try:
+        # Localizamos el botón "Volver" usando su clase
+        boton_volver = driver.find_element(By.CLASS_NAME, "btn-default")
+        
+        # Verificamos si el botón es visible y clickeable
+        if boton_volver.is_displayed() and boton_volver.is_enabled():
+            boton_volver.click()
+            print("Volvimos a la tabla correctamente.")
+            return True
+        else:
+            print("El botón 'Volver' no está habilitado o visible.")
+            return False
+    except Exception as e:
+        print(f"Error al intentar volver a la tabla: {e}")
+        return False
+
+
+def navegar_y_extraer(driver):
+    """Navega por las páginas de la tabla, hace clic en los expedientes y extrae la información."""
+    total_expedientes = 0  # Contador de expedientes extraídos
+
+    while True:
+        # Contamos los elementos de la página actual
+        try:
+            tabla = driver.find_element(By.CLASS_NAME, "table-striped")
+            filas = tabla.find_elements(By.TAG_NAME, "tr")
+            
+            # Excluimos la primera fila de encabezado
+            for fila in filas[1:]:
+                # Intentamos hacer clic en el ícono del expediente en cada fila
+                if hacer_click_expediente(driver):
+                    # Extraemos el número del expediente
+                    expediente = extraer_expediente(driver)
+                    if expediente:
+                        total_expedientes += 1
+                        print(f"Expediente {expediente} extraído correctamente.")
+
+                    # Regresamos a la tabla
+                    volver_a_tabla(driver)
+                    
+        except Exception as e:
+            print(f"Error al procesar la tabla o los expedientes: {e}")
+            break
+
+        # Intentamos hacer clic en "Siguiente" si hay más páginas
+        if not hacer_click_siguiente(driver):
+            break
+
+        # Esperamos un poco antes de cargar la siguiente página
+        time.sleep(2)
+    
+    print(f"Se extrajeron un total de {total_expedientes} expedientes.")
+    return total_expedientes
+
+
+
 def main():
     """Función principal que orquesta el proceso de scraping."""
     # Configurar el driver
@@ -128,11 +220,13 @@ def main():
     try:
         # Realizar las acciones de búsqueda
         buscar_parte(driver)
-        # Navegar por las páginas y contar los elementos
-        elementos_tabla(driver)
+        
+        # Navegar por las páginas de la tabla, hacer clic en los expedientes y extraer información
+        navegar_y_extraer(driver)
+        
     finally:
         # Cerrar el driver al final
         driver.quit()
 
 if __name__ == "__main__":
-    main()
+    main()  
