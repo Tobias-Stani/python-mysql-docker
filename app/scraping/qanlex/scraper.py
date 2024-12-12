@@ -169,6 +169,15 @@ def extraer_expediente(driver):
         caratula_contenedor = driver.find_element(By.ID, "expediente:j_idt90:detailCover")
         datos["caratula"] = caratula_contenedor.text.strip()
 
+        # Hacer clic en el tab "Intervinientes" usando el texto visible (es más robusto que el ID)
+        intervinientes_tab = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//span[text()='Intervinientes']"))
+        )
+        intervinientes_tab.click()
+        print("Tab 'Intervinientes' clickeado correctamente.")
+
+        time.sleep(5)
+
         # Imprimir los datos extraídos para verificar
         print(f"Datos extraídos: {datos}")
 
