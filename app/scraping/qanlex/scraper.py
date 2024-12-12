@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import StaleElementReferenceException
 import time
 
 def setup_driver():
@@ -178,33 +179,71 @@ def navegar_y_extraer(driver):
     total_expedientes = 0  # Contador de expedientes extraídos
 
     while True:
-        # Contamos los elementos de la página actual
         try:
-            tabla = driver.find_element(By.CLASS_NAME, "table-striped")
-            filas = tabla.find_elements(By.TAG_NAME, "tr")
+            # Esperar a que la tabla se cargue completamente
+            tabla = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "table-striped"))
+            )
             
-            # Excluimos la primera fila de encabezado
-            for fila in filas[1:]:
-                # Intentamos hacer clic en el ícono del expediente en cada fila
-                if hacer_click_expediente(driver):
-                    # Extraemos el número del expediente
-                    expediente = extraer_expediente(driver)
-                    if expediente:
-                        total_expedientes += 1
-                        print(f"Expediente {expediente} extraído correctamente.")
+            # Método para procesar la tabla que maneja elementos obsoletos
+            def procesar_tabla():
+                nonlocal total_expedientes
+                # Re-encontrar las filas cada vez para evitar stale elements
+                filas = driver.find_elements(By.TAG_NAME, "tr")[1:]  # Excluir encabezado
+                
+                for i in range(len(filas)):
+                    try:
+                        # Re-encontrar la fila en cada iteración
+                        filas = driver.find_elements(By.TAG_NAME, "tr")[1:]
+                        fila_actual = filas[i]
+                        
+                        # Buscar el ícono de "Ver" en la fila actual
+                        try:
+                            icono_ver = fila_actual.find_element(By.CLASS_NAME, "fa-eye")
+                        except Exception:
+                            print(f"No se encontró ícono en la fila {i}")
+                            continue
+                        
+                        # Hacer clic en el ícono usando JavaScript para mayor confiabilidad
+                        driver.execute_script("arguments[0].click();", icono_ver)
+                        
+                        # Esperar a que cargue la página del expediente
+                        WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.CLASS_NAME, "col-xs-10"))
+                        )
+                        
+                        # Extraer expediente
+                        expediente = extraer_expediente(driver)
+                        if expediente:
+                            total_expedientes += 1
+                            print(f"Expediente {expediente} extraído correctamente.")
 
-                    # Regresamos a la tabla
-                    volver_a_tabla(driver)
-                    
+                        # Regresar a la tabla
+                        volver_a_tabla(driver)
+                        
+                        # Esperar a que la tabla se recargue
+                        WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.CLASS_NAME, "table-striped"))
+                        )
+                        
+                    except StaleElementReferenceException:
+                        print(f"Elemento obsoleto en la fila {i}, saltando...")
+                        continue
+                    except Exception as e:
+                        print(f"Error procesando fila {i}: {e}")
+            
+            # Procesar la tabla
+            procesar_tabla()
+
         except Exception as e:
-            print(f"Error al procesar la tabla o los expedientes: {e}")
+            print(f"Error general al procesar la tabla: {e}")
             break
 
-        # Intentamos hacer clic en "Siguiente" si hay más páginas
+        # Intentar ir a la siguiente página
         if not hacer_click_siguiente(driver):
             break
 
-        # Esperamos un poco antes de cargar la siguiente página
+        # Pequeña pausa para permitir la carga
         time.sleep(2)
     
     print(f"Se extrajeron un total de {total_expedientes} expedientes.")
