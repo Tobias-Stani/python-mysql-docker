@@ -141,6 +141,10 @@ def hacer_click_expediente(driver):
         print(f"Error al intentar hacer clic en el expediente: {e}")
         return False
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 def extraer_expediente(driver):
     """
     Extrae datos generales (expediente, carátula, y dependencia) de la página web.
@@ -169,14 +173,41 @@ def extraer_expediente(driver):
         caratula_contenedor = driver.find_element(By.ID, "expediente:j_idt90:detailCover")
         datos["caratula"] = caratula_contenedor.text.strip()
 
-        # Hacer clic en el tab "Intervinientes" usando el texto visible (es más robusto que el ID)
+        # Hacer clic en el tab "Intervinientes" usando el texto visible
         intervinientes_tab = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//span[text()='Intervinientes']"))
         )
         intervinientes_tab.click()
-        print("Tab 'Intervinientes' clickeado correctamente.")
 
-        time.sleep(5)
+        # Esperar que la tabla de participantes esté cargada
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "#expediente\\:participantsTable"))
+        )
+
+        # Extraer actores y demandados
+        actores = []
+        demandados = []
+
+        # Encontrar las filas que contienen los participantes (actores y demandados)
+        filas = driver.find_elements(By.CSS_SELECTOR, "#expediente\\:participantsTable .rf-dt-r")
+
+        # Recorrer las filas y extraer los datos de actores y demandados
+        for fila in filas:
+            # Obtener el tipo de participante (actor o demandado)
+            tipo = fila.find_element(By.CSS_SELECTOR, "td:nth-child(1)").text.strip()
+            
+            # Obtener el nombre del participante
+            nombre = fila.find_element(By.CSS_SELECTOR, "td:nth-child(2)").text.strip()
+            
+            # Clasificar como actor o demandado
+            if "ACTOR" in tipo:
+                actores.append(nombre)
+            elif "DEMANDADO" in tipo:
+                demandados.append(nombre)
+
+        # Añadir actores y demandados al diccionario de datos
+        datos["actores"] = actores
+        datos["demandados"] = demandados
 
         # Imprimir los datos extraídos para verificar
         print(f"Datos extraídos: {datos}")
@@ -186,6 +217,7 @@ def extraer_expediente(driver):
     except Exception as e:
         print(f"Error al extraer los datos generales: {e}")
         return None
+
 
 def volver_a_tabla(driver):
     """Hace clic en el botón de 'Volver' para regresar a la tabla de expedientes."""
