@@ -74,33 +74,8 @@ def buscar_parte(driver):
         print("No se pudo hacer clic en el botón 'Consultar'.")
         return
 
-    # Esperar que los resultados de la tabla carguen
-    time.sleep(3)  # Ajusta este tiempo si es necesario para tu caso
-
-def contar_elementos_y_extraer(driver):
-    """Cuenta los elementos de la tabla y los extrae."""
-    try:
-        # Encontramos la tabla por su clase
-        tabla = driver.find_element(By.CLASS_NAME, "table-striped")
-        filas = tabla.find_elements(By.TAG_NAME, "tr")
-        
-        # Excluimos la primera fila de encabezado
-        contador = 0
-        for fila in filas[1:]:  # Ignoramos la primera fila de encabezado
-            celdas = fila.find_elements(By.TAG_NAME, "td")
-            if len(celdas) > 0:  # Si la fila tiene celdas
-                contador += 1
-        
-        return contador
-
-    except Exception as e:
-        print(f"Error al contar elementos o extraer la tabla: {e}")
-        return 0
-
-
 def hacer_click_siguiente(driver):
-    """Intenta hacer clic en el botón 'Siguiente' si está disponible.
-    Maneja escenarios en los que el botón cambia, desaparece o no es localizable."""
+    """Intenta hacer clic en el botón 'Siguiente' si está disponible."""
     try:
         # Intentamos localizar el botón "Siguiente"
         boton_siguiente = driver.find_element(By.XPATH, '//*[@id="j_idt118:j_idt208:j_idt215"]')
@@ -113,50 +88,37 @@ def hacer_click_siguiente(driver):
         else:
             print("El botón 'Siguiente' no está habilitado o visible. Terminando el scraping.")
             return False
-
     except Exception:
-        # Silenciar el error y retornar False si no se encuentra el botón
         print("El botón 'Siguiente' no se encuentra. Terminando el scraping.")
         return False
 
-
-
-def navegar_y_scrapear(driver):
-    """Navega por las páginas de la tabla hasta que no se encuentre el botón 'Siguiente' 
-    o este desaparezca, y cuenta todos los elementos."""
+def elementos_tabla(driver):
+    """Navega por las páginas de la tabla hasta que no se encuentre el botón 'Siguiente' o este desaparezca, y cuenta todos los elementos."""
     total_elementos = 0  # Inicializamos el contador de elementos totales
     
     while True:
-        # Contamos los elementos de la página actual
+        # Esperar a que la tabla se cargue
         try:
-            tabla = driver.find_element(By.CLASS_NAME, "table-striped")
+            tabla = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "table-striped"))
+            )
             filas = tabla.find_elements(By.TAG_NAME, "tr")
-            
-            # Excluimos la primera fila de encabezado y contamos las filas restantes
             elementos_en_pagina = len(filas) - 1  # Restamos 1 para ignorar la fila de encabezado
-            if elementos_en_pagina > 0:
-                total_elementos += elementos_en_pagina  # Sumamos al total
-                print(f"Elementos en esta página: {elementos_en_pagina}")
-            else:
-                print("No se encontraron elementos en esta página.")
+            total_elementos += elementos_en_pagina
+            print(f"Elementos en esta página: {elementos_en_pagina}")
         except Exception as e:
-            # Silenciar errores relacionados con la tabla
             print(f"Error al procesar la tabla en esta página: {e}")
             break
 
         # Intentamos hacer clic en "Siguiente"
         if not hacer_click_siguiente(driver):
-            # Si no se puede hacer clic, terminamos el bucle
             break
 
-        # Esperamos 2 segundos para que la nueva página cargue
+        # Esperamos un poco para que la nueva página cargue
         time.sleep(2)
-    
-    # Imprimimos el total de elementos al final
+
     print(f"Hay un total de {total_elementos} expedientes.")
     return total_elementos
-
-
 
 def main():
     """Función principal que orquesta el proceso de scraping."""
@@ -166,15 +128,11 @@ def main():
     try:
         # Realizar las acciones de búsqueda
         buscar_parte(driver)
-
-        # Contar los elementos en la tabla y mostrar el total
-        total_elementos = navegar_y_scrapear(driver)
-        print(f"Total de expedientes encontrados: {total_elementos}")
-
+        # Navegar por las páginas y contar los elementos
+        elementos_tabla(driver)
     finally:
         # Cerrar el driver al final
         driver.quit()
 
 if __name__ == "__main__":
     main()
-
