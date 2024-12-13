@@ -8,6 +8,8 @@ from selenium.webdriver.support.ui import Select
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+import json
+from datetime import datetime
 import time
 
 def setup_driver():
@@ -179,21 +181,21 @@ def extraer_expediente(driver):
                 tabla = WebDriverWait(driver, 2).until(
                     EC.presence_of_element_located((By.ID, "expediente:action-table"))
                 )
-        
+
                 # Esperar a que las filas de la tabla sean visibles
                 filas = WebDriverWait(driver, 10).until(
                     EC.presence_of_all_elements_located((By.CSS_SELECTOR, "#expediente\\:action-table tr"))
                 )
-        
+
                 # Verificar si la tabla está vacía (excluyendo el encabezado)
                 if len(filas) <= 1:
                     datos["registros_tabla"] = []
                     print("La tabla de movimientos está vacía.")
                     return datos
-        
+
                 # Lista para almacenar los registros extraídos
                 registros_tabla = []
-        
+
                 for fila in filas[1:]:  # Saltar el encabezado
                     # Extraer columnas específicas: Fecha, Tipo, Detalle
                     celdas = fila.find_elements(By.TAG_NAME, "td")
@@ -202,19 +204,19 @@ def extraer_expediente(driver):
                         tipo = celdas[3].text.strip()  # Columna de Tipo
                         detalle = celdas[4].text.strip()  # Columna de Detalle
                         registros_tabla.append({"fecha": fecha, "tipo": tipo, "detalle": detalle})
-        
+
                 # Almacenar en el diccionario principal
                 datos["registros_tabla"] = registros_tabla
-        
+
                 # Si no se encontraron registros, imprimir mensaje
                 if not registros_tabla:
                     print("No se encontraron registros en la tabla.")
-        
+
             except TimeoutException:
                 # Manejar el caso de que la tabla no cargue dentro del tiempo especificado
                 datos["registros_tabla"] = []
                 print("Tiempo de espera agotado al cargar la tabla de movimientos.")
-        
+
         except Exception as e:
             # Manejar cualquier otro error inesperado
             datos["registros_tabla"] = []
@@ -256,8 +258,28 @@ def extraer_expediente(driver):
         datos["actores"] = actores
         datos["demandados"] = demandados
 
-        # Imprimir los datos extraídos para verificar
-        print(f"Datos extraídos: {datos}")
+        # **Mostrar los datos extraídos de forma estructurada y prolija**
+        print("\n--- Datos Extraídos ---")
+        print(f"Expediente: {datos['expediente']}")
+        print(f"Jurisdicción: {datos['jurisdiccion']}")
+        print(f"Dependencia: {datos['dependencia']}")
+        print(f"Situación Actual: {datos['situacion_actual']}")
+        print(f"Carátula: {datos['caratula']}")
+
+        if datos.get("registros_tabla"):
+            print("\nRegistros de la Tabla de Movimientos:")
+            for registro in datos["registros_tabla"]:
+                print(f"  - Fecha: {registro['fecha']}, Tipo: {registro['tipo']}, Detalle: {registro['detalle']}")
+        else:
+            print("\nNo se encontraron registros en la tabla de movimientos.")
+
+        print("\nActores:")
+        for actor in datos["actores"]:
+            print(f"  - {actor}")
+
+        print("\nDemandados:")
+        for demandado in datos["demandados"]:
+            print(f"  - {demandado}")
 
         return datos
 
