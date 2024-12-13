@@ -141,9 +141,6 @@ def hacer_click_expediente(driver):
         print(f"Error al intentar hacer clic en el expediente: {e}")
         return False
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 def extraer_expediente(driver):
     """
