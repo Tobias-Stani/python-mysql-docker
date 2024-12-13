@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import time
 
 def setup_driver():
@@ -144,7 +145,8 @@ def hacer_click_expediente(driver):
 
 def extraer_expediente(driver):
     """
-    Extrae datos generales (expediente, carátula, y dependencia) de la página web.
+    Extrae datos generales (expediente, carátula, y dependencia) de la página web,
+    incluyendo las fechas, tipos y detalles de la tabla antes de hacer clic en "Intervinientes".
     """
     try:
         # Diccionario para almacenar los datos extraídos
@@ -169,6 +171,54 @@ def extraer_expediente(driver):
         # Extraer carátula
         caratula_contenedor = driver.find_element(By.ID, "expediente:j_idt90:detailCover")
         datos["caratula"] = caratula_contenedor.text.strip()
+
+        # **Nuevo código para extraer fechas, tipos y detalles de la tabla**
+        try:
+            try:
+                # Esperar a que la tabla esté presente en el DOM
+                tabla = WebDriverWait(driver, 2).until(
+                    EC.presence_of_element_located((By.ID, "expediente:action-table"))
+                )
+        
+                # Esperar a que las filas de la tabla sean visibles
+                filas = WebDriverWait(driver, 10).until(
+                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "#expediente\\:action-table tr"))
+                )
+        
+                # Verificar si la tabla está vacía (excluyendo el encabezado)
+                if len(filas) <= 1:
+                    datos["registros_tabla"] = []
+                    print("La tabla de movimientos está vacía.")
+                    return datos
+        
+                # Lista para almacenar los registros extraídos
+                registros_tabla = []
+        
+                for fila in filas[1:]:  # Saltar el encabezado
+                    # Extraer columnas específicas: Fecha, Tipo, Detalle
+                    celdas = fila.find_elements(By.TAG_NAME, "td")
+                    if len(celdas) >= 5:  # Verificar que haya suficientes columnas
+                        fecha = celdas[2].text.strip()  # Columna de Fecha
+                        tipo = celdas[3].text.strip()  # Columna de Tipo
+                        detalle = celdas[4].text.strip()  # Columna de Detalle
+                        registros_tabla.append({"fecha": fecha, "tipo": tipo, "detalle": detalle})
+        
+                # Almacenar en el diccionario principal
+                datos["registros_tabla"] = registros_tabla
+        
+                # Si no se encontraron registros, imprimir mensaje
+                if not registros_tabla:
+                    print("No se encontraron registros en la tabla.")
+        
+            except TimeoutException:
+                # Manejar el caso de que la tabla no cargue dentro del tiempo especificado
+                datos["registros_tabla"] = []
+                print("Tiempo de espera agotado al cargar la tabla de movimientos.")
+        
+        except Exception as e:
+            # Manejar cualquier otro error inesperado
+            datos["registros_tabla"] = []
+            print(f"Error al extraer la tabla de movimientos: {e}")
 
         # Hacer clic en el tab "Intervinientes" usando el texto visible
         intervinientes_tab = WebDriverWait(driver, 10).until(
@@ -214,6 +264,7 @@ def extraer_expediente(driver):
     except Exception as e:
         print(f"Error al extraer los datos generales: {e}")
         return None
+
 
 
 def volver_a_tabla(driver):
@@ -314,7 +365,6 @@ def navegar_y_extraer(driver):
 
 def main():
     """Función principal que orquesta el proceso de scraping."""
-    # Configurar el driver
     driver = setup_driver()
 
     try:
