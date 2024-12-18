@@ -10,6 +10,7 @@ from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import json
 from datetime import datetime
+import os
 import time
 
 def setup_driver():
@@ -21,6 +22,30 @@ def setup_driver():
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
+
+def guardar_datos_json(datos, archivo="expedientes.json"):
+    """Guarda los datos extraídos en un archivo JSON, agregándolos a los datos existentes en lugar de sobrescribirlos."""
+    # Verificar si el archivo ya existe
+    if os.path.exists(archivo):
+        # Leer los datos existentes en el archivo
+        with open(archivo, "r", encoding="utf-8") as f:
+            try:
+                datos_existentes = json.load(f)
+            except json.JSONDecodeError:
+                # Si el archivo está vacío o no tiene formato JSON válido, iniciar con lista vacía
+                datos_existentes = []
+    else:
+        # Si el archivo no existe, iniciamos una lista vacía
+        datos_existentes = []
+
+    # Agregar los nuevos datos al conjunto de datos existentes
+    datos_existentes.append(datos)
+
+    # Guardar los datos actualizados en el archivo JSON
+    with open(archivo, "w", encoding="utf-8") as f:
+        json.dump(datos_existentes, f, ensure_ascii=False, indent=4)
+    
+    print(f"Datos guardados correctamente en {archivo}")
 
 def esperar_elemento(driver, by, value, timeout=5):
     """Espera hasta que el elemento especificado esté presente y sea interactuable."""
@@ -176,46 +201,45 @@ def extraer_expediente(driver):
 
         # **Nuevo código para extraer fechas, tipos y detalles de la tabla**
         try:
-            try:
-                # Esperar a que la tabla esté presente en el DOM
-                tabla = WebDriverWait(driver, 2).until(
-                    EC.presence_of_element_located((By.ID, "expediente:action-table"))
-                )
+            # Esperar a que la tabla esté presente en el DOM
+            tabla = WebDriverWait(driver, 2).until(
+                EC.presence_of_element_located((By.ID, "expediente:action-table"))
+            )
 
-                # Esperar a que las filas de la tabla sean visibles
-                filas = WebDriverWait(driver, 10).until(
-                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "#expediente\\:action-table tr"))
-                )
+            # Esperar a que las filas de la tabla sean visibles
+            filas = WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "#expediente\\:action-table tr"))
+            )
 
-                # Verificar si la tabla está vacía (excluyendo el encabezado)
-                if len(filas) <= 1:
-                    datos["registros_tabla"] = []
-                    print("La tabla de movimientos está vacía.")
-                    return datos
-
-                # Lista para almacenar los registros extraídos
-                registros_tabla = []
-
-                for fila in filas[1:]:  # Saltar el encabezado
-                    # Extraer columnas específicas: Fecha, Tipo, Detalle
-                    celdas = fila.find_elements(By.TAG_NAME, "td")
-                    if len(celdas) >= 5:  # Verificar que haya suficientes columnas
-                        fecha = celdas[2].text.strip()  # Columna de Fecha
-                        tipo = celdas[3].text.strip()  # Columna de Tipo
-                        detalle = celdas[4].text.strip()  # Columna de Detalle
-                        registros_tabla.append({"fecha": fecha, "tipo": tipo, "detalle": detalle})
-
-                # Almacenar en el diccionario principal
-                datos["registros_tabla"] = registros_tabla
-
-                # Si no se encontraron registros, imprimir mensaje
-                if not registros_tabla:
-                    print("No se encontraron registros en la tabla.")
-
-            except TimeoutException:
-                # Manejar el caso de que la tabla no cargue dentro del tiempo especificado
+            # Verificar si la tabla está vacía (excluyendo el encabezado)
+            if len(filas) <= 1:
                 datos["registros_tabla"] = []
-                print("Tiempo de espera agotado al cargar la tabla de movimientos.")
+                print("La tabla de movimientos está vacía.")
+                return datos
+
+            # Lista para almacenar los registros extraídos
+            registros_tabla = []
+
+            for fila in filas[1:]:  # Saltar el encabezado
+                # Extraer columnas específicas: Fecha, Tipo, Detalle
+                celdas = fila.find_elements(By.TAG_NAME, "td")
+                if len(celdas) >= 5:  # Verificar que haya suficientes columnas
+                    fecha = celdas[2].text.strip()  # Columna de Fecha
+                    tipo = celdas[3].text.strip()  # Columna de Tipo
+                    detalle = celdas[4].text.strip()  # Columna de Detalle
+                    registros_tabla.append({"fecha": fecha, "tipo": tipo, "detalle": detalle})
+
+            # Almacenar en el diccionario principal
+            datos["registros_tabla"] = registros_tabla
+
+            # Si no se encontraron registros, imprimir mensaje
+            if not registros_tabla:
+                print("No se encontraron registros en la tabla.")
+
+        except TimeoutException:
+            # Manejar el caso de que la tabla no cargue dentro del tiempo especificado
+            datos["registros_tabla"] = []
+            print("Tiempo de espera agotado al cargar la tabla de movimientos.")
 
         except Exception as e:
             # Manejar cualquier otro error inesperado
@@ -281,11 +305,15 @@ def extraer_expediente(driver):
         for demandado in datos["demandados"]:
             print(f"  - {demandado}")
 
+        # Guardar los datos en un archivo JSON
+        guardar_datos_json(datos)  # Llamamos a la función para guardar los datos en JSON
+
         return datos
 
     except Exception as e:
         print(f"Error al extraer los datos generales: {e}")
         return None
+
 
 
 

@@ -1,7 +1,3 @@
-CREATE DATABASE scw_scraper;
-
-USE scw_scraper;
-
 CREATE TABLE expedientes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     expediente VARCHAR(255),
