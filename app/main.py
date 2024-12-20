@@ -13,7 +13,7 @@ db_config = {
 
 @app.route('/')
 def home():
-    return "¡Bienvenido a la aplicación Python-MySQL-Docker!"
+    return "¡Bienvenido a la aplicación Python-MySQL-Docker !"
 
 @app.route('/data')
 def get_data():
