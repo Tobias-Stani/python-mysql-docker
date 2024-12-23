@@ -22,7 +22,7 @@ if response.status_code == 200:
         if span_text:
             clubes.append(span_text)
 
-    # Convertir la lista de clubes a formato JSON con codificación UTF-8
+    # Convertir la lista de clubes a formato JSON 
     json_output = json.dumps(clubes, ensure_ascii=False, indent=4)
 
     # Imprimir el JSON en consola o devolverlo en algún endpoint
