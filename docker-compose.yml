@@ -11,7 +11,7 @@ services:
       - "5001:5000"  # Exposición para Flask o FastAPI
     depends_on:
       - db  # Garantiza que la base de datos se inicie antes
-    restart: always  # Reinicio automático en caso de error
+    restart: always  
     environment:
       - DB_HOST=db
       - DB_USER=root
