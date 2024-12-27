@@ -23,7 +23,7 @@ services:
 
   db:
     image: mysql:8.0  # Usa la imagen oficial de MySQL
-    container_name: mysql_python  # Nombre personalizado para el contenedor de MySQL
+    container_name: mysql_python  
     restart: always  # Reinicio automático en caso de error
     environment:
       MYSQL_ROOT_PASSWORD: secret
@@ -37,7 +37,7 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin  # Imagen oficial de phpMyAdmin
-    container_name: phpmyadmin_python  # Nombre personalizado para el contenedor de phpMyAdmin
+    container_name: phpmyadmin_python 
     restart: always  # Reinicio automático en caso de error
     depends_on:
       - db  # Asegura que MySQL esté disponible antes de iniciar phpMyAdmin
