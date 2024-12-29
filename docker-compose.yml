@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: app_python  # Nombre personalizado para el contenedor de la aplicación
+    container_name: app_python  
     volumes:
       - ./app:/app  # Monta el código para desarrollo en caliente
     ports:
