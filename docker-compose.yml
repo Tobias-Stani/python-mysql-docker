@@ -38,7 +38,7 @@ services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin  # Imagen oficial de phpMyAdmin
     container_name: phpmyadmin_python 
-    restart: always  # Reinicio automático en caso de error
+    restart: always  
     depends_on:
       - db  # Asegura que MySQL esté disponible antes de iniciar phpMyAdmin
     ports:
