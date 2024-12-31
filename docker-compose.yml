@@ -24,7 +24,7 @@ services:
   db:
     image: mysql:8.0  # Usa la imagen oficial de MySQL
     container_name: mysql_python  
-    restart: always  # Reinicio automático en caso de error
+    restart: always  
     environment:
       MYSQL_ROOT_PASSWORD: secret
       MYSQL_DATABASE: mi_base
