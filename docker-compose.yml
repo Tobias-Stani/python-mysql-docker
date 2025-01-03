@@ -36,7 +36,7 @@ services:
       - db_data:/var/lib/mysql  # Volumen para persistencia de datos
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin  # Imagen oficial de phpMyAdmin
+    image: phpmyadmin/phpmyadmin  
     container_name: phpmyadmin_python 
     restart: always  
     depends_on:
