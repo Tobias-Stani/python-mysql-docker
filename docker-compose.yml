@@ -45,7 +45,7 @@ services:
       - "8080:80"  # Exposición del puerto 8080 para phpMyAdmin
     environment:
       PMA_HOST: db  # Conecta phpMyAdmin al servicio MySQL
-      PMA_PORT: 3306  # Puerto de MySQL dentro del contenedor
+      PMA_PORT: 3306  
 
 volumes:
   db_data:
