@@ -31,7 +31,7 @@ services:
       MYSQL_USER: user
       MYSQL_PASSWORD: password
     ports:
-      - "3305:3306"  # Host:Container
+      - "3305:3306"  # Host:Container 
     volumes:
       - db_data:/var/lib/mysql  # Volumen para persistencia de datos
 
