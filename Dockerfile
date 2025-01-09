@@ -1,4 +1,3 @@
-# Usa una imagen base con Python
 FROM python:3.9-slim
 
 # Actualiza el sistema e instala dependencias para Selenium y Chrome
