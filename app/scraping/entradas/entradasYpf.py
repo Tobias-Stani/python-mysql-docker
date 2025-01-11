@@ -80,7 +80,7 @@ def tarea():
     # Enviar el mensaje a Telegram
     enviar_mensaje_telegram(resultado)
 
-    driver.quit()  # Asegurarse de cerrar el navegador al finalizar la tarea
+    driver.quit()  
 
 # Configurar el cronograma con schedule
 schedule.every(1).hours.do(tarea)  # Ejecutar la tarea cada 1 hora
