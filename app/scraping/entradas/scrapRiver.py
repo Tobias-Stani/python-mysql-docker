@@ -8,6 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import schedule
 import time
 
 # Cargar las variables de entorno desde el archivo .env
@@ -66,7 +67,7 @@ def findMatch(driver):
         for product in matching_products:
             mensaje += f"- {product}\n"
     else:
-        mensaje = "❌ No se encontraron productos con las palabras clave."
+        mensaje = "❌ No se encontraron productos del Glorioso RIVER PLATE."
 
     print(mensaje)  # Mostrar el mensaje en la consola
     return mensaje
@@ -79,7 +80,14 @@ def main():
         enviar_mensaje_telegram(mensaje)  # Enviar mensaje a Telegram
     finally:
         driver.quit()
- 
+
+# Configurar el cronograma con schedule
+schedule.every(15).minutes.do(main)  # Ejecutar cada 15 minutos
+
 if __name__ == "__main__":
-    main()
- 
+    print("Ejecutando la tarea inicial...")
+    main()  # Ejecutar la función inmediatamente al iniciar el programa
+    print("Programador de tareas iniciado. Ejecutando cada 15 minutos...")
+    while True:
+        schedule.run_pending()  # Ejecutar tareas programadas
+        time.sleep(1)  # Pausar para evitar uso intensivo de CPU
