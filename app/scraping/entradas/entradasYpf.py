@@ -50,22 +50,21 @@ def findMatch(driver):
     keywords = ["RIVER", "ENTRADA", "ENTRADAS"]
     products = driver.find_elements(By.CLASS_NAME, "product-title-item")
     
-    matching_count = 0  
-    matching_products = []  # Para almacenar productos coincidentes
+    matching_products = []  # Lista para almacenar productos coincidentes
 
     for product in products:
         product_name = product.text.upper()  # Convertir a mayúsculas para hacer la búsqueda más precisa
         if any(keyword in product_name for keyword in keywords):
-            matching_count += 1
-            matching_products.append(product_name)  # Agregar el nombre del producto al listado
+            etiqueta = "#ProductoEncontrado"
+            mensaje = f"{etiqueta}\n{product_name}"  # Crear mensaje con etiqueta
+            matching_products.append(mensaje)  # Agregar a la lista de productos
     
-    # Preparar el mensaje a enviar a Telegram
-    if matching_count > 0:
-        mensaje = f"\nSe encontraron {matching_count} productos con las palabras clave:\n"
-        for product in matching_products:
-            mensaje += f"- {product}\n"
+    # Preparar el mensaje final
+    if matching_products:
+        mensaje = "Se encontraron los siguientes productos:\n\n" + \
+                  "\n".join(f"<pre>{producto}</pre>" for producto in matching_products)
     else:
-        mensaje = "\nNo se encontraron productos con las palabras clave."
+        mensaje = "No se encontraron productos con las palabras clave."
     
     return mensaje
 
@@ -77,16 +76,12 @@ def tarea():
     # Obtener el mensaje de la función findMatch
     resultado = findMatch(driver)
 
-    # Enviar el mensaje a Telegram
+    # Enviar el mensaje completo a Telegram
     enviar_mensaje_telegram(resultado)
 
-    driver.quit()  
-
-# Configurar el cronograma con schedule
-schedule.every(1).hours.do(tarea)  # Ejecutar la tarea cada 1 hora
+    driver.quit()  # Cierra el navegador al finalizar
 
 if __name__ == "__main__":
-    print("Iniciando el programador de tareas...")
-    while True:
-        schedule.run_pending()  # Ejecutar las tareas programadas
-        time.sleep(1)  # Evitar uso intensivo de CPU
+    print("Ejecutando la tarea única...")
+    tarea()  # Ejecutar la tarea inmediatamente
+
