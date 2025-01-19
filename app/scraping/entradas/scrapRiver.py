@@ -86,7 +86,7 @@ schedule.every(15).minutes.do(main)  # Ejecutar cada 15 minutos
 
 if __name__ == "__main__":
     print("Ejecutando la tarea inicial...")
-    main()  # Ejecutar la función inmediatamente al iniciar el programa
+    main()  
     print("Programador de tareas iniciado. Ejecutando cada 15 minutos...")
     while True:
         schedule.run_pending()  # Ejecutar tareas programadas
