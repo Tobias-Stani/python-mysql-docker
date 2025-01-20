@@ -174,6 +174,55 @@ def search_MomoTostadores(driver):
 
     return products
 
+def search_AcademiaBaristas(driver):
+    url = "https://academiadebaristas.mitiendanube.com/cafe/"  # Página principal de los productos
+    driver.get(url)
+    products = []
+
+    try:
+        # Localizar todos los contenedores de productos
+        product_elements = driver.find_elements(By.CSS_SELECTOR, "div.js-item-product")
+
+        for product in product_elements:
+                # Obtener el nombre del producto
+                name = product.find_element(By.CSS_SELECTOR, "div.js-item-name").text.strip()
+
+                # Obtener el precio del producto
+                price_text = product.find_element(By.CSS_SELECTOR, "span.js-price-display").text.strip()
+                price = normalize_price(price_text)
+
+                # Obtener la URL del producto
+                product_url = product.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+
+                # Agregar los datos al listado de productos
+                products.append({
+                    "name": name,
+                    "price": price,
+                    "url": product_url
+                })
+
+    except Exception as e:
+        print(f"Error al extraer los productos de Academia de baristas: {e}")
+
+
+    except Exception as e:
+        print(f"Error al extraer los productos: {e}")
+
+    return products
+
+
+@app.route('/preciosAcademiaBaristas', methods=['GET'])
+def precios_AcademiaBaristas():
+    driver = setup_driver()
+    try:
+        products = search_AcademiaBaristas(driver)
+        if products:
+            return jsonify(products), 200
+        else:
+            return jsonify({"message": "No se encontraron productos en Fuego Tostadores."}), 404
+    finally:
+        driver.quit()
+
 
 @app.route('/preciosMomo', methods=['GET'])
 def precios_Momo():
@@ -249,9 +298,10 @@ def productos_combinados():
         avo_products = search_avo(driver)
         puerto_blast_products = search_puerto_blast(driver)
         momo_tostadores = search_MomoTostadores(driver)
+        academia_baristas = search_AcademiaBaristas(driver)
 
         # Combinar todos los productos
-        all_products = fuego_products + delirante_products + avo_products + puerto_blast_products + momo_tostadores
+        all_products = fuego_products + delirante_products + avo_products + puerto_blast_products + momo_tostadores + academia_baristas
 
         # Añadir el campo 'id' autoincremental
         for idx, product in enumerate(all_products, start=1):
