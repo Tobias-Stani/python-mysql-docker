@@ -10,9 +10,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import schedule
 import time
+import logging
 
 # Cargar las variables de entorno desde el archivo .env
-load_dotenv(dotenv_path='/home/tobi/develop/scraping/.env.local')  # Ajusta la ruta a tu archivo .env si es necesario
+load_dotenv(dotenv_path='/home/tobi/develop/scraping/.env.local')  
+
+# Configurar el logger para imprimir mensajes en la consola
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
 # Acceder a las variables de entorno
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -61,32 +65,37 @@ def findMatch(driver):
             matching_count += 1
             matching_products.append(product.text)  # Guardar el producto coincidente
 
-    # Preparar el mensaje para Telegram
+    # Preparar el mensaje solo si hay productos coincidentes
     if matching_count > 0:
         mensaje = f"🎟️ <b>Se encontraron {matching_count} productos:</b>\n\n"
         for product in matching_products:
             mensaje += f"- {product}\n"
+        logging.info("Productos encontrados: Se enviará un mensaje a Telegram.✅✅✅✅✅✅✅")
+        return mensaje  # Devuelve el mensaje si hay coincidencias
     else:
-        mensaje = "❌ No se encontraron productos del Glorioso RIVER PLATE."
+        logging.info("No se encontraron productos con las palabras clave.❌❌❌❌❌❌❌")
+        return None  # Devuelve None si no hay coincidencias
 
-    print(mensaje)  # Mostrar el mensaje en la consola
-    return mensaje
 
 def main():
     driver = setup_driver()
     try:
         login(driver)
         mensaje = findMatch(driver)  # Obtener mensaje de coincidencias
-        enviar_mensaje_telegram(mensaje)  # Enviar mensaje a Telegram
+        if mensaje:  # Solo enviar mensaje si no es None
+            enviar_mensaje_telegram(mensaje)
+        else:
+            logging.info("No se enviará ningún mensaje a Telegram.")
     finally:
         driver.quit()
+
 
 # Configurar el cronograma con schedule
 schedule.every(15).minutes.do(main)  # Ejecutar cada 15 minutos
 
 if __name__ == "__main__":
     print("Ejecutando la tarea inicial...")
-    main()  
+    main()
     print("Programador de tareas iniciado. Ejecutando cada 15 minutos...")
     while True:
         schedule.run_pending()  # Ejecutar tareas programadas
