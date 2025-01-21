@@ -91,7 +91,7 @@ def main():
 
 
 # Configurar el cronograma con schedule
-schedule.every(5).minutes.do(main)  # Ejecutar cada 15 minutos
+schedule.every(3).minutes.do(main)  # Ejecutar cada 15 minutos
 
 if __name__ == "__main__":
     print("Ejecutando la tarea inicial...")
