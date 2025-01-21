@@ -108,6 +108,7 @@ def search_avo(driver):
 
     return products
 
+#normaliza mal el precio
 def search_puerto_blast(driver):
     url = "https://cafepuertoblest.com/cafe-especial/?mpage=2"  
     driver.get(url)
@@ -174,6 +175,7 @@ def search_MomoTostadores(driver):
 
     return products
 
+#normaliza mal el precio
 def search_AcademiaBaristas(driver):
     url = "https://academiadebaristas.mitiendanube.com/cafe/"  # Página principal de los productos
     driver.get(url)
