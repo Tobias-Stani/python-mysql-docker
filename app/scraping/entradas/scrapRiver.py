@@ -96,7 +96,7 @@ schedule.every(3).minutes.do(main)  # Ejecutar cada 15 minutos
 if __name__ == "__main__":
     print("Ejecutando la tarea inicial...")
     main()
-    print("Programador de tareas iniciado. Ejecutando cada 15 minutos...")
+    print("Programador de tareas iniciado. Ejecutando cada 3 minutos...")
     while True:
         schedule.run_pending()  # Ejecutar tareas programadas
         time.sleep(1)  # Pausar para evitar uso intensivo de CPU
