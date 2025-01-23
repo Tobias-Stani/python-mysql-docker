@@ -45,7 +45,7 @@ def setup_driver():
     service = Service(ChromeDriverManager().install())
     options = webdriver.ChromeOptions()
     options.add_argument("--window-size=1250,850")
-    options.add_argument("--headless")  # Ejecuta el navegador en modo headless (sin UI)
+    options.add_argument("--headless")  
     return Chrome(service=service, options=options)
 
 def login(driver):
