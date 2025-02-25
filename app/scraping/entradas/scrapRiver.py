@@ -53,7 +53,7 @@ def login(driver):
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'h5')))
 
 def findMatch(driver):
-    keywords = ["RIVER"]  # Palabras clave a buscar
+    keywords = ["RIVER", "river", "River","BOCA", "boca", "Boca"]  # Palabras clave a buscar
     products = driver.find_elements(By.CLASS_NAME, "product-title-item")
     
     matching_count = 0
@@ -91,7 +91,7 @@ def main():
 
 
 # Configurar el cronograma con schedule
-schedule.every(3).minutes.do(main)  # Ejecutar cada 15 minutos
+schedule.every(1).minutes.do(main)  # Ejecutar cada 15 minutos
 
 if __name__ == "__main__":
     print("Ejecutando la tarea inicial...")
