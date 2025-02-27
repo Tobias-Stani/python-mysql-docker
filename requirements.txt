@@ -11,3 +11,5 @@ pandas
 schedule
 yt-dlp
 tqdm
+pyfiglet
+rich

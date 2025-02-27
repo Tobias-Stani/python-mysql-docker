@@ -1,31 +1,53 @@
 import yt_dlp
-from tqdm import tqdm
+import pyfiglet
+import shutil
+import sys
+from rich.console import Console
+from rich.progress import Progress
+from rich.prompt import Prompt
+from rich.panel import Panel
 
-# Pedimos el enlace del video
-url = input("Ingresa el enlace del video de YouTube: ")
+class VideoDownloader:
+    def __init__(self):
+        self.console = Console()
+        self._mostrar_titulo()
+        self.url = Prompt.ask("[bold yellow]🔗 Ingresa el enlace del video[/]")
+    
+    def _mostrar_titulo(self):
+        ancho_terminal = shutil.get_terminal_size().columns
+        fuente = "small" if ancho_terminal < 50 else "standard" if ancho_terminal < 80 else "big"
+        titulo = pyfiglet.figlet_format("Descarga de Videos", font=fuente)
+        self.console.print(Panel(titulo, title="🎬 YouTube | Twitter | X", style="bold cyan", width=ancho_terminal - 2))
+    
+    def _progreso(self, d):
+        if d['status'] == 'downloading':
+            descargado = d.get('downloaded_bytes', 0)
+            total = d.get('total_bytes', 100)
+            self.progress.update(self.task_id, completed=descargado, total=total)
+        elif d['status'] == 'finished':
+            self.progress.stop()
+            self.console.print("\n✅ [bold green]Descarga exitosa[/] 🎉")
+    
+    def descargar_video(self):
+        opciones = {
+            'format': 'best',
+            'progress_hooks': [self._progreso],
+            'quiet': True,
+            'noprogress': True,
+            'logtostderr': False,
+            'cookies': 'cookies.txt' 
+        }
+        
+        with Progress() as self.progress:
+            self.task_id = self.progress.add_task("[cyan]⬇ Descargando...", total=100)
+            try:
+                with yt_dlp.YoutubeDL(opciones) as ydl:
+                    ydl.download([self.url])
+            except Exception:
+                self.progress.stop()
+                self.console.print("\n❌ [bold red]No se pudo descargar el video[/]", style="bold red")
+                sys.exit(1)
 
-# Función para manejar el progreso
-def progress_hook(d):
-    if d['status'] == 'downloading':
-        total = d.get('total_bytes') or d.get('total_bytes_estimate')
-        downloaded = d.get('downloaded_bytes', 0)
-        if total:
-            progress_bar.n = downloaded
-            progress_bar.total = total
-            progress_bar.refresh()
-    elif d['status'] == 'finished':
-        progress_bar.close()
-        print("\n✅ Descarga completada")
-
-# Configuración para descargar en la mejor calidad
-ydl_opts = {
-    'format': 'bestvideo+bestaudio/best',
-    'outtmpl': '%(title)s.%(ext)s',  # Guarda con el título original
-    'progress_hooks': [progress_hook],  # Agregar la barra de progreso
-}
-
-# Inicializar la barra de progreso
-progress_bar = tqdm(total=100, unit='B', unit_scale=True, desc="Descargando")
-
-with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-    ydl.download([url])
+if __name__ == "__main__":
+    downloader = VideoDownloader()
+    downloader.descargar_video()
