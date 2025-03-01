@@ -49,7 +49,5 @@ Asegúrate de tener Python 3 instalado, luego ejecuta:
 
 pip install -r requirements.txt
 3️⃣ Ejecutar el Servidor
-sh
-Copy
-Edit
+
 python app.py
