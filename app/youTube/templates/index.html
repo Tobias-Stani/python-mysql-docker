@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descargador de Videos</title>
+    <style>
+        /* Colores y variables */
+        :root {
+            --primary-color: #4a6bff;
+            --primary-dark: #3a59d9;
+            --secondary-color: #ff6b6b;
+            --success-color: #28c76f;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #343a40;
+            --border-radius: 12px;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        /* Contenedor principal */
+        .container {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            max-width: 600px;
+            width: 100%;
+            margin: auto;
+            transition: var(--transition);
+        }
+
+        /* Encabezado */
+        h1 {
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: var(--primary-color);
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        h1:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        h2 {
+            font-size: 22px;
+            margin: 20px 0;
+            color: var(--text-color);
+        }
+
+        /* Formulario y entrada */
+        .input-group {
+            position: relative;
+            margin: 25px 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+            background-color: rgba(250, 250, 250, 0.9);
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 107, 255, 0.2);
+        }
+
+        input::placeholder {
+            color: #9ca3af;
+        }
+
+        /* Botones */
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(74, 107, 255, 0.2);
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(74, 107, 255, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(74, 107, 255, 0.2);
+        }
+
+        /* Botones específicos */
+        .btn-video {
+            background-color: var(--success-color);
+            box-shadow: 0 4px 6px rgba(40, 199, 111, 0.2);
+        }
+
+        .btn-video:hover {
+            background-color: #20a15f;
+            box-shadow: 0 6px 12px rgba(40, 199, 111, 0.3);
+        }
+
+        .btn-audio {
+            background-color: var(--secondary-color);
+            box-shadow: 0 4px 6px rgba(255, 107, 107, 0.2);
+        }
+
+        .btn-audio:hover {
+            background-color: #ff5252;
+            box-shadow: 0 6px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        /* Iconos y estado */
+        .button-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        #status {
+            margin: 15px 0;
+            padding: 10px;
+            font-size: 16px;
+            color: #4b5563;
+            min-height: 24px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .status-loading {
+            color: var(--primary-color) !important;
+        }
+
+        .status-ready {
+            color: var(--success-color) !important;
+        }
+
+        .status-error {
+            color: var(--secondary-color) !important;
+        }
+
+        /* Sección de vista previa */
+        #preview {
+            background-color: rgba(250, 250, 250, 0.6);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 25px;
+            border: 1px solid #e5e7eb;
+            transition: var(--transition);
+        }
+
+        iframe {
+            border-radius: var(--border-radius);
+            width: 100%;
+            height: 315px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+
+        /* Enlace de descarga */
+        #downloadLink {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 25px;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            margin-top: 15px;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(74, 107, 255, 0.2);
+            width: 100%;
+            text-align: center;
+        }
+
+        #downloadLink:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(74, 107, 255, 0.3);
+        }
+
+        /* Botón de doble acción */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        /* Esconder elementos */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            iframe {
+                height: 240px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Descargador de Videos</h1>
+        <div class="input-group">
+            <input type="text" id="videoUrl" placeholder="Ingresa la URL del video">
+        </div>
+        <button onclick="getPreview()">
+            <span class="button-icon">🔍</span>Ver Vista Previa
+        </button>
+
+        <div id="preview" class="hidden fade-in">
+            <h2>Vista Previa</h2>
+            <iframe id="videoFrame" frameborder="0" allowfullscreen></iframe>
+            <div class="action-buttons">
+                <button onclick="getDownloadLink('video')" class="btn-video">
+                    <span class="button-icon">🎬</span>Descargar Video
+                </button>
+                <button onclick="getDownloadLink('audio')" class="btn-audio">
+                    <span class="button-icon">🎵</span>Descargar Audio
+                </button>
+            </div>
+        </div>
+
+        <p id="status"></p>
+        <a id="downloadLink" class="hidden fade-in" target="_blank">📥 Descargar Archivo</a>
+    </div>
+
+    <script>
+        function getPreview() {
+            const url = document.getElementById("videoUrl").value;
+            const previewDiv = document.getElementById("preview");
+            const videoFrame = document.getElementById("videoFrame");
+            const status = document.getElementById("status");
+            const downloadLink = document.getElementById("downloadLink");
+
+            // Ocultar enlace de descarga previo
+            downloadLink.classList.add("hidden");
+            status.textContent = "";
+            status.className = "";
+
+            let videoId, embedUrl;
+            if (url.includes("youtube.com") || url.includes("youtu.be")) {
+                videoId = url.split("v=")[1]?.split("&")[0] || url.split("/").pop();
+                embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            } else if (url.includes("twitter.com") || url.includes("x.com")) {
+                embedUrl = `https://publish.twitter.com/oembed?url=${url}`;
+            } else if (url.includes("instagram.com")) {
+                embedUrl = `https://www.instagram.com/p/${url.split("/p/")[1]?.split("/")[0]}/embed/`;
+            } else {
+                alert("Solo se admiten enlaces de YouTube, X (Twitter) e Instagram.");
+                return;
+            }
+
+            videoFrame.src = embedUrl;
+            previewDiv.classList.remove("hidden");
+        }
+
+        function getDownloadLink(option) {
+            const url = document.getElementById("videoUrl").value;
+            const status = document.getElementById("status");
+            const downloadLink = document.getElementById("downloadLink");
+
+            if (!url) {
+                alert("Por favor ingresa una URL.");
+                return;
+            }
+
+            let platform;
+            if (url.includes("youtube.com") || url.includes("youtu.be")) {
+                platform = "youtube";
+            } else if (url.includes("twitter.com") || url.includes("x.com")) {
+                platform = "twitter";
+            } else if (url.includes("instagram.com")) {
+                platform = "instagram";
+            } else {
+                alert("Formato no soportado.");
+                return;
+            }
+
+            status.textContent = "Obteniendo enlace de descarga...";
+            status.className = "status-loading pulse";
+            downloadLink.classList.add("hidden");
+
+            fetch("/get_download_link", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: url, platform: platform, option: option })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    status.textContent = "¡Enlace de descarga listo!";
+                    status.className = "status-ready";
+                    downloadLink.href = data.url;
+                    downloadLink.textContent = "📥 Descargar " + data.filename;
+                    downloadLink.classList.remove("hidden");
+                } else {
+                    status.textContent = "Error al obtener el enlace.";
+                    status.className = "status-error";
+                    downloadLink.classList.add("hidden");
+                }
+            })
+            .catch(() => {
+                status.textContent = "Error en la solicitud.";
+                status.className = "status-error";
+                downloadLink.classList.add("hidden");
+            });
+        }
+    </script>
+</body>
+</html>
