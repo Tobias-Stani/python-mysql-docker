@@ -7,16 +7,23 @@
     <style>
         /* Colores y variables */
         :root {
-            --primary-color: #4a6bff;
-            --primary-dark: #3a59d9;
-            --secondary-color: #ff6b6b;
-            --success-color: #28c76f;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #343a40;
-            --border-radius: 12px;
-            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            --transition: all 0.3s ease;
+            --primary-color: #000000;
+            --primary-light: #333333;
+            --accent-color: #0070f3;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --bg-color: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+            --border-radius: 8px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         /* Estilos generales */
@@ -27,82 +34,71 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: var(--font);
             background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
+            color: var(--primary-color);
+            line-height: 1.5;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
 
         /* Contenedor principal */
         .container {
-            background: var(--card-bg);
-            padding: 30px;
+            background: var(--bg-color);
+            padding: 2rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
-            max-width: 600px;
+            max-width: 560px;
             width: 100%;
             margin: auto;
-            transition: var(--transition);
+            border: 1px solid var(--gray-200);
         }
 
         /* Encabezado */
         h1 {
-            font-size: 28px;
-            margin-bottom: 25px;
-            color: var(--primary-color);
+            font-size: 1.75rem;
             font-weight: 700;
-            position: relative;
-            padding-bottom: 10px;
-        }
-
-        h1:after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 4px;
-            background: var(--primary-color);
-            border-radius: 2px;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            letter-spacing: -0.025em;
         }
 
         h2 {
-            font-size: 22px;
-            margin: 20px 0;
-            color: var(--text-color);
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            letter-spacing: -0.025em;
         }
 
         /* Formulario y entrada */
         .input-group {
             position: relative;
-            margin: 25px 0;
+            margin-bottom: 1.25rem;
         }
 
         input {
             width: 100%;
-            padding: 15px 20px;
-            border: 2px solid #e0e0e0;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-300);
             border-radius: var(--border-radius);
-            font-size: 16px;
+            font-size: 0.925rem;
             transition: var(--transition);
-            background-color: rgba(250, 250, 250, 0.9);
+            background-color: var(--bg-color);
         }
 
         input:focus {
-            border-color: var(--primary-color);
+            border-color: var(--accent-color);
             outline: none;
-            box-shadow: 0 0 0 3px rgba(74, 107, 255, 0.2);
+            box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.1);
         }
 
         input::placeholder {
-            color: #9ca3af;
+            color: var(--gray-600);
+            opacity: 0.8;
         }
 
         /* Botones */
@@ -110,70 +106,64 @@
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 15px 25px;
+            padding: 0.75rem 1rem;
             border-radius: var(--border-radius);
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 0.925rem;
+            font-weight: 500;
             cursor: pointer;
             transition: var(--transition);
             width: 100%;
-            margin: 10px 0;
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 6px rgba(74, 107, 255, 0.2);
+            box-shadow: var(--shadow-sm);
         }
 
         button:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(74, 107, 255, 0.3);
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
         }
 
         button:active {
             transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(74, 107, 255, 0.2);
         }
 
         /* Botones específicos */
         .btn-video {
             background-color: var(--success-color);
-            box-shadow: 0 4px 6px rgba(40, 199, 111, 0.2);
         }
 
         .btn-video:hover {
-            background-color: #20a15f;
-            box-shadow: 0 6px 12px rgba(40, 199, 111, 0.3);
+            background-color: #0da271;
         }
 
         .btn-audio {
-            background-color: var(--secondary-color);
-            box-shadow: 0 4px 6px rgba(255, 107, 107, 0.2);
+            background-color: var(--warning-color);
         }
 
         .btn-audio:hover {
-            background-color: #ff5252;
-            box-shadow: 0 6px 12px rgba(255, 107, 107, 0.3);
+            background-color: #e29209;
         }
 
         /* Iconos y estado */
         .button-icon {
-            margin-right: 10px;
-            font-size: 20px;
+            margin-right: 0.5rem;
+            font-size: 1rem;
         }
 
         #status {
-            margin: 15px 0;
-            padding: 10px;
-            font-size: 16px;
-            color: #4b5563;
-            min-height: 24px;
+            margin: 1rem 0;
+            padding: 0.5rem;
+            font-size: 0.925rem;
+            color: var(--gray-600);
+            min-height: 1.5rem;
             text-align: center;
-            font-weight: 500;
+            font-weight: 400;
         }
 
         .status-loading {
-            color: var(--primary-color) !important;
+            color: var(--accent-color) !important;
         }
 
         .status-ready {
@@ -181,56 +171,54 @@
         }
 
         .status-error {
-            color: var(--secondary-color) !important;
+            color: #ef4444 !important;
         }
 
         /* Sección de vista previa */
         #preview {
-            background-color: rgba(250, 250, 250, 0.6);
+            background-color: var(--gray-50);
             border-radius: var(--border-radius);
-            padding: 20px;
-            margin-top: 25px;
-            border: 1px solid #e5e7eb;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px solid var(--gray-200);
             transition: var(--transition);
         }
 
         iframe {
             border-radius: var(--border-radius);
             width: 100%;
-            height: 315px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            height: 280px;
+            margin-bottom: 1.25rem;
             transition: var(--transition);
+            border: none;
+            background-color: var(--gray-800);
         }
 
         /* Enlace de descarga */
         #downloadLink {
             display: inline-block;
-            background-color: var(--primary-color);
+            background-color: var(--accent-color);
             color: white;
-            padding: 15px 25px;
+            padding: 0.75rem 1rem;
             text-decoration: none;
             border-radius: var(--border-radius);
-            font-weight: 600;
-            margin-top: 15px;
+            font-weight: 500;
+            margin-top: 1rem;
             transition: var(--transition);
-            box-shadow: 0 4px 6px rgba(74, 107, 255, 0.2);
             width: 100%;
             text-align: center;
         }
 
         #downloadLink:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(74, 107, 255, 0.3);
+            background-color: #005ad1;
+            transform: translateY(-1px);
         }
 
         /* Botón de doble acción */
         .action-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
+            gap: 0.75rem;
         }
 
         /* Esconder elementos */
@@ -240,28 +228,28 @@
 
         /* Animaciones */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .fade-in {
-            animation: fadeIn 0.5s ease forwards;
+            animation: fadeIn 0.3s ease forwards;
         }
 
         @keyframes pulse {
-            0% { opacity: 0.6; }
+            0% { opacity: 0.7; }
             50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            100% { opacity: 0.7; }
         }
 
         .pulse {
-            animation: pulse 1.5s infinite ease-in-out;
+            animation: pulse 1.2s infinite ease-in-out;
         }
 
         /* Estilos responsivos */
         @media (max-width: 600px) {
             .container {
-                padding: 20px;
+                padding: 1.5rem;
             }
             
             .action-buttons {
@@ -269,8 +257,51 @@
             }
 
             iframe {
-                height: 240px;
+                height: 220px;
             }
+        }
+
+        /* Estados de procesamiento */
+        .hover-indicator {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hover-indicator::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: currentColor;
+            transition: width 0.3s ease;
+        }
+
+        button:hover .hover-indicator::after {
+            width: 100%;
+        }
+
+        /* Efecto de brillo al cargar */
+        @keyframes shimmer {
+            0% {
+                background-position: -468px 0;
+            }
+            100% {
+                background-position: 468px 0;
+            }
+        }
+
+        .shimmer {
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.5) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            background-size: 468px 44px;
+            background-repeat: no-repeat;
+            animation: shimmer 1.5s infinite linear;
         }
     </style>
 </head>
@@ -281,24 +312,24 @@
             <input type="text" id="videoUrl" placeholder="Ingresa la URL del video">
         </div>
         <button onclick="getPreview()">
-            <span class="button-icon">🔍</span>Ver Vista Previa
+            <span class="button-icon">→</span><span class="hover-indicator">Previsualizar</span>
         </button>
 
         <div id="preview" class="hidden fade-in">
             <h2>Vista Previa</h2>
-            <iframe id="videoFrame" frameborder="0" allowfullscreen></iframe>
+            <iframe id="videoFrame" allowfullscreen></iframe>
             <div class="action-buttons">
                 <button onclick="getDownloadLink('video')" class="btn-video">
-                    <span class="button-icon">🎬</span>Descargar Video
+                    <span class="button-icon">▼</span>Descargar Video
                 </button>
                 <button onclick="getDownloadLink('audio')" class="btn-audio">
-                    <span class="button-icon">🎵</span>Descargar Audio
+                    <span class="button-icon">♪</span>Descargar Audio
                 </button>
             </div>
         </div>
 
         <p id="status"></p>
-        <a id="downloadLink" class="hidden fade-in" target="_blank">📥 Descargar Archivo</a>
+        <a id="downloadLink" class="hidden fade-in" target="_blank">Descargar Archivo</a>
     </div>
 
     <script>
@@ -308,80 +339,69 @@
             const videoFrame = document.getElementById("videoFrame");
             const status = document.getElementById("status");
             const downloadLink = document.getElementById("downloadLink");
-
+    
             // Ocultar enlace de descarga previo
             downloadLink.classList.add("hidden");
             status.textContent = "";
             status.className = "";
-
-            let videoId, embedUrl;
+    
+            // Detectar plataforma
             if (url.includes("youtube.com") || url.includes("youtu.be")) {
-                videoId = url.split("v=")[1]?.split("&")[0] || url.split("/").pop();
-                embedUrl = `https://www.youtube.com/embed/${videoId}`;
-            } else if (url.includes("twitter.com") || url.includes("x.com")) {
-                embedUrl = `https://publish.twitter.com/oembed?url=${url}`;
+                let videoId = url.split("v=")[1]?.split("&")[0] || url.split("/").pop();
+                videoFrame.src = `https://www.youtube.com/embed/${videoId}`;
+                previewDiv.classList.remove("hidden");
             } else if (url.includes("instagram.com")) {
-                embedUrl = `https://www.instagram.com/p/${url.split("/p/")[1]?.split("/")[0]}/embed/`;
+                videoFrame.src = `https://www.instagram.com/p/${url.split("/p/")[1]?.split("/")[0]}/embed`;
+                previewDiv.classList.remove("hidden");
+            } else if (url.includes("twitter.com") || url.includes("x.com")) {
+                alert("Previsualización no disponible para Twitter/X. Puedes proceder con la descarga.");
+                previewDiv.classList.add("hidden");
             } else {
-                alert("Solo se admiten enlaces de YouTube, X (Twitter) e Instagram.");
-                return;
+                alert("Plataforma no soportada. Ingresa un enlace de YouTube, Instagram o X/Twitter.");
+                previewDiv.classList.add("hidden");
             }
-
-            videoFrame.src = embedUrl;
-            previewDiv.classList.remove("hidden");
         }
-
+    
         function getDownloadLink(option) {
             const url = document.getElementById("videoUrl").value;
             const status = document.getElementById("status");
             const downloadLink = document.getElementById("downloadLink");
-
+    
             if (!url) {
                 alert("Por favor ingresa una URL.");
                 return;
             }
-
-            let platform;
-            if (url.includes("youtube.com") || url.includes("youtu.be")) {
-                platform = "youtube";
-            } else if (url.includes("twitter.com") || url.includes("x.com")) {
-                platform = "twitter";
-            } else if (url.includes("instagram.com")) {
-                platform = "instagram";
-            } else {
-                alert("Formato no soportado.");
-                return;
-            }
-
-            status.textContent = "Obteniendo enlace de descarga...";
+    
+            status.textContent = "Procesando...";
             status.className = "status-loading pulse";
             downloadLink.classList.add("hidden");
-
+    
             fetch("/get_download_link", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url: url, platform: platform, option: option })
+                body: JSON.stringify({ url: url, option: option })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    status.textContent = "¡Enlace de descarga listo!";
+                    status.textContent = "Listo para descargar";
                     status.className = "status-ready";
-                    downloadLink.href = data.url;
-                    downloadLink.textContent = "📥 Descargar " + data.filename;
+                    downloadLink.href = data.url; 
+                    downloadLink.textContent = "📁 " + data.filename;
                     downloadLink.classList.remove("hidden");
                 } else {
-                    status.textContent = "Error al obtener el enlace.";
+                    status.textContent = "No se pudo procesar el video";
                     status.className = "status-error";
                     downloadLink.classList.add("hidden");
                 }
             })
             .catch(() => {
-                status.textContent = "Error en la solicitud.";
+                status.textContent = "Error en la solicitud";
                 status.className = "status-error";
                 downloadLink.classList.add("hidden");
             });
         }
     </script>
+    
 </body>
 </html>
