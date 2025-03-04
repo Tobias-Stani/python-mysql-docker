@@ -53,23 +53,26 @@ def login(driver):
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'h5')))
 
 def findMatch(driver):
-    keywords = ["RIVER", "river", "River","BOCA", "boca", "Boca"]  # Palabras clave a buscar
+    keywords = ["RIVER", "river", "River", "BOCA", "boca", "Boca"]  # Palabras clave a buscar
     products = driver.find_elements(By.CLASS_NAME, "product-title-item")
-    
+
     matching_count = 0
     matching_products = []
 
     for product in products:
         product_name = product.text.upper()
+        product_link = product.find_element(By.TAG_NAME, "a").get_attribute("href")  # Extraer link
+        
         if any(keyword in product_name for keyword in keywords):
             matching_count += 1
-            matching_products.append(product.text)  # Guardar el producto coincidente
+            matching_products.append((product.text, product_link))  # Guardar nombre y link
 
     # Preparar el mensaje solo si hay productos coincidentes
     if matching_count > 0:
         mensaje = f"🎟️ <b>Se encontraron {matching_count} productos:</b>\n\n"
-        for product in matching_products:
-            mensaje += f"- {product}\n"
+        for name, link in matching_products:
+            mensaje += f"- <a href='{link}'>{name}</a>\n"  # Agregar link formateado en HTML
+        
         logging.info("Productos encontrados: Se enviará un mensaje a Telegram.✅✅✅✅✅✅✅")
         return mensaje  # Devuelve el mensaje si hay coincidencias
     else:
@@ -99,4 +102,4 @@ if __name__ == "__main__":
     print("Programador de tareas iniciado. Ejecutando cada 3 minutos...")
     while True:
         schedule.run_pending()  # Ejecutar tareas programadas
-        time.sleep(1)  # Pausar para evitar uso intensivo de CPU
+        time.sleep(1)  # Pausar para evitar uso intensivo de CPU    
