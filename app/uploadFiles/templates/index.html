@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Archivos</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-light: #93c5fd;
+            --primary-dark: #1d4ed8;
+            --primary-extra-light: #dbeafe;
+            --primary-extra-dark: #1e3a8a;
+            --text-dark: #1e293b;
+            --text-light: #f8fafc;
+            --bg-light: #f1f5f9;
+            --bg-white: #ffffff;
+            --border-color: #e2e8f0;
+        }
+        
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .app-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .app-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .app-title {
+            color: var(--primary-dark);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card {
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+            border-bottom: none;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+            background-color: var(--bg-white);
+        }
+        
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+        }
+        
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+        
+        .btn {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-success {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-success:hover {
+            background-color: var(--primary-extra-dark);
+            border-color: var(--primary-extra-dark);
+        }
+        
+        .btn-info {
+            background-color: var(--primary-light);
+            border-color: var(--primary-light);
+            color: var(--text-dark);
+        }
+        
+        .btn-info:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: var(--text-light);
+        }
+        
+        .btn-secondary {
+            background-color: var(--text-dark);
+            border-color: var(--text-dark);
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+            cursor: pointer;
+        }
+        
+        .custom-file-input {
+            border: 2px dashed var(--primary-light);
+            border-radius: 12px;
+            background-color: var(--primary-extra-light);
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        
+        .custom-file-input:hover {
+            border-color: var(--primary-color);
+            background-color: #e6effe;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            font-size: 100px;
+            opacity: 0;
+            right: 0;
+            top: 0;
+            cursor: pointer;
+            height: 100%;
+            width: 100%;
+        }
+        
+        .file-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .file-hint {
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+        }
+        
+        .folder-select-wrapper {
+            position: relative;
+        }
+        
+        .folder-select-wrapper::after {
+            content: '\f078';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--primary-color);
+        }
+        
+        #folder-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding-right: 2.5rem;
+        }
+        
+        .alert {
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .alert-success {
+            background-color: var(--primary-extra-light);
+            border-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        
+        .file-list-container {
+            background-color: var(--bg-white);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.9rem;
+        }
+        
+        .actions-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .actions-container {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="app-header">
+        <h1 class="app-title">Gestor de Archivos</h1>
+        <p>Sube, organiza y administra tus archivos en el servidor</p>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cloud-upload-alt me-2"></i> Subir Archivos
+                </div>
+                <div class="card-body">
+                    <form id="upload-form" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label for="file" class="form-label">Archivo</label>
+                            <div class="file-input-wrapper">
+                                <div class="custom-file-input" id="file-display">
+                                    <i class="fas fa-file-upload file-icon"></i>
+                                    <span id="file-name">Arrastra y suelta tu archivo aquí o haz clic para seleccionar</span>
+                                    <span class="file-hint">Formatos soportados: todos los archivos</span>
+                                </div>
+                                <input type="file" class="form-control" id="file" name="file" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="folder-select" class="form-label">Ubicación del archivo</label>
+                            <div class="folder-select-wrapper">
+                                <select id="folder-select" class="form-control">
+                                    <option value="">(Raíz)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-upload me-2"></i> Subir Archivo
+                        </button>
+                    </form>
+                    <div id="response" class="mt-3"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-folder-plus me-2"></i> Crear Nueva Carpeta
+                </div>
+                <div class="card-body">
+                    <form id="create-folder-form">
+                        <div class="mb-3">
+                            <label for="folder-name" class="form-label">Nombre de la carpeta</label>
+                            <input type="text" class="form-control" id="folder-name" name="folder_name" placeholder="Ingresa el nombre de la carpeta" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-plus-circle me-2"></i> Crear Carpeta
+                        </button>
+                    </form>
+                    <div id="folder-response" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cog me-2"></i> Acciones
+                </div>
+                <div class="card-body">
+                    <div class="actions-container">
+                        <button id="test-ssh" class="btn btn-info w-100 mb-3">
+                            <i class="fas fa-plug me-2"></i> Probar Conexión
+                        </button>
+                        <button id="list-files" class="btn btn-secondary w-100">
+                            <i class="fas fa-list me-2"></i> Listar Archivos
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <i class="fas fa-server me-2"></i> Archivos en el Servidor
+                </div>
+                <div class="card-body">
+                    <div id="file-list" class="file-list-container">
+                        <p class="text-center text-muted">Haz clic en "Listar Archivos" para ver el contenido del servidor</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Mejorar la experiencia de selección de archivos
+        $('#file').on('change', function() {
+            var fileName = $(this).val().split('\\').pop();
+            if (fileName) {
+                $('#file-name').text(fileName);
+                $('#file-display').css('border-style', 'solid');
+            } else {
+                $('#file-name').text('Arrastra y suelta tu archivo aquí o haz clic para seleccionar');
+                $('#file-display').css('border-style', 'dashed');
+            }
+        });
+
+        loadFolders(); // Cargar carpetas al iniciar
+
+        // Subir archivo con selección de carpeta
+        $('#upload-form').on('submit', function(event) {
+            event.preventDefault();
+            
+            var formData = new FormData(this);
+            var selectedFolder = $('#folder-select').val();
+            formData.append("folder", selectedFolder);  // Agregar la carpeta seleccionada
+
+            $.ajax({
+                url: '/upload',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                beforeSend: function() {
+                    $('#response').html('<div class="alert alert-info">Subiendo archivo, por favor espera...</div>');
+                },
+                success: function(response) {
+                    $('#response').html('<div class="alert alert-' + (response.success ? 'success' : 'danger') + '">' + 
+                        '<i class="fas fa-' + (response.success ? 'check-circle' : 'exclamation-circle') + ' me-2"></i>' +
+                        response.message + '</div>');
+                    
+                    if (response.success) {
+                        // Reiniciar el formulario
+                        $('#upload-form')[0].reset();
+                        $('#file-name').text('Arrastra y suelta tu archivo aquí o haz clic para seleccionar');
+                        $('#file-display').css('border-style', 'dashed');
+                    }
+                },
+                error: function() {
+                    $('#response').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Error al subir archivo. Intenta de nuevo.</div>');
+                }
+            });
+        });
+
+        // Crear carpeta en el servidor
+        $('#create-folder-form').on('submit', function(event) {
+            event.preventDefault();
+            
+            var folderName = $('#folder-name').val().trim();
+            if (folderName === "") {
+                $('#folder-response').html('<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>El nombre de la carpeta no puede estar vacío.</div>');
+                return;
+            }
+
+            $.ajax({
+                url: '/create-folder',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ folder_name: folderName }),
+                beforeSend: function() {
+                    $('#folder-response').html('<div class="alert alert-info">Creando carpeta, por favor espera...</div>');
+                },
+                success: function(response) {
+                    $('#folder-response').html('<div class="alert alert-' + (response.success ? 'success' : 'danger') + '">' + 
+                        '<i class="fas fa-' + (response.success ? 'check-circle' : 'exclamation-circle') + ' me-2"></i>' +
+                        response.message + '</div>');
+                    
+                    if (response.success) {
+                        loadFolders(); // Recargar la lista de carpetas si se creó correctamente
+                        $('#create-folder-form')[0].reset(); // Limpiar formulario
+                    }
+                },
+                error: function() {
+                    $('#folder-response').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Error al crear la carpeta. Intenta de nuevo.</div>');
+                }
+            });
+        });
+
+        // Probar conexión SSH
+        $('#test-ssh').on('click', function() {
+            $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Probando...');
+            
+            $.get('/test-ssh', function(response) {
+                $('#response').html('<div class="alert alert-' + (response.success ? 'success' : 'danger') + '">' + 
+                    '<i class="fas fa-' + (response.success ? 'check-circle' : 'exclamation-circle') + ' me-2"></i>' +
+                    response.message + (response.success ? '<br>' + response.output : '') + '</div>');
+                
+                $('#test-ssh').prop('disabled', false).html('<i class="fas fa-plug me-2"></i> Probar Conexión');
+            }).fail(function() {
+                $('#response').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Error al probar la conexión. Intenta de nuevo.</div>');
+                $('#test-ssh').prop('disabled', false).html('<i class="fas fa-plug me-2"></i> Probar Conexión');
+            });
+        });
+
+        // Listar archivos en el servidor
+        $('#list-files').on('click', function() {
+            $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Cargando...');
+            
+            $.get('/list-files', function(response) {
+                if (response.success) {
+                    $('#file-list').html('<pre>' + response.output + '</pre>');
+                } else {
+                    $('#file-list').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>' + response.message + '</div>');
+                }
+                
+                $('#list-files').prop('disabled', false).html('<i class="fas fa-list me-2"></i> Listar Archivos');
+            }).fail(function() {
+                $('#file-list').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Error al listar archivos. Intenta de nuevo.</div>');
+                $('#list-files').prop('disabled', false).html('<i class="fas fa-list me-2"></i> Listar Archivos');
+            });
+        });
+    });
+
+    // Cargar lista de carpetas
+    function loadFolders() {
+        $.get('/list-folders', function(response) {
+            if (response.success) {
+                var folderSelect = $('#folder-select');
+                folderSelect.empty();
+                folderSelect.append('<option value="">(Raíz)</option>');
+                response.folders.forEach(function(folder) {
+                    folderSelect.append('<option value="' + folder + '">' + folder + '</option>');
+                });
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
