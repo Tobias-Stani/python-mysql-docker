@@ -39,14 +39,14 @@ def test_ssh():
 @app.route("/upload", methods=["POST"])
 def upload_file():
     """
-    Endpoint para subir archivos a una carpeta específica en el servidor remoto.
+    Endpoint para subir múltiples archivos a una carpeta específica en el servidor remoto.
     """
-    if "file" not in request.files:
-        return jsonify({"success": False, "message": "No se encontró ningún archivo en la solicitud"})
+    if "files[]" not in request.files:
+        return jsonify({"success": False, "message": "No se encontraron archivos en la solicitud"})
     
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"success": False, "message": "El nombre del archivo es inválido"})
+    files = request.files.getlist("files[]")
+    if not files or files[0].filename == "":
+        return jsonify({"success": False, "message": "No se seleccionaron archivos válidos"})
     
     folder = request.form.get("folder", "").strip()  # Obtener la carpeta seleccionada
     remote_path = os.path.join(UPLOAD_PATH, folder) if folder else UPLOAD_PATH  # Usar carpeta o default
@@ -64,17 +64,39 @@ def upload_file():
         except FileNotFoundError:
             sftp.mkdir(remote_path)  # Si no existe, la crea
 
-        file_path = os.path.join(remote_path, file.filename)
-        temp_path = f"/tmp/{file.filename}"
-        file.save(temp_path)  # Guardar temporalmente en el servidor local
+        # Subir cada archivo en la lista
+        uploaded_files = []
+        failed_files = []
+
+        for file in files:
+            try:
+                file_path = os.path.join(remote_path, file.filename)
+                temp_path = f"/tmp/{file.filename}"
+                file.save(temp_path)  # Guardar temporalmente en el servidor local
+                
+                sftp.put(temp_path, file_path)  # Subir archivo al servidor remoto
+                os.remove(temp_path)  # Eliminar el archivo temporal
+                uploaded_files.append(file.filename)
+            except Exception as e:
+                failed_files.append({"filename": file.filename, "error": str(e)})
         
-        sftp.put(temp_path, file_path)  # Subir archivo al servidor remoto
         sftp.close()
         client.close()
 
-        os.remove(temp_path)  # Eliminar el archivo temporal
-
-        return jsonify({"success": True, "message": f"Archivo {file.filename} subido a {remote_path}"})
+        if failed_files:
+            return jsonify({
+                "success": True,
+                "partial": True,
+                "message": f"Se subieron {len(uploaded_files)} archivos, {len(failed_files)} fallaron",
+                "uploaded": uploaded_files,
+                "failed": failed_files
+            })
+        
+        return jsonify({
+            "success": True,
+            "message": f"Se subieron {len(uploaded_files)} archivos a {remote_path}",
+            "uploaded": uploaded_files
+        })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
@@ -99,14 +121,12 @@ def list_folders():
         return jsonify({"success": False, "message": str(e)})
 
 
-    
-
 @app.route("/create-folder", methods=["POST"])
 def create_folder():
     """
     Endpoint para crear una carpeta en la ruta de destino del servidor remoto.
     """
-    data = request.json  # Obtener datos enviados en formato JSON
+    data = request.json
     folder_name = data.get("folder_name", "").strip()
 
     if not folder_name:
@@ -120,8 +140,14 @@ def create_folder():
         sftp = client.open_sftp()
         folder_path = os.path.join(UPLOAD_PATH, folder_name)
 
+        # 🛑 Verificar si la carpeta base existe antes de crear subcarpetas
         try:
-            sftp.mkdir(folder_path)  # Crear la carpeta en el servidor remoto
+            sftp.stat(UPLOAD_PATH)
+        except FileNotFoundError:
+            sftp.mkdir(UPLOAD_PATH)  # Crear la carpeta base si no existe
+
+        try:
+            sftp.mkdir(folder_path)  # Crear la carpeta nueva
             message = f"Carpeta '{folder_name}' creada exitosamente en {UPLOAD_PATH}"
         except IOError:
             message = f"La carpeta '{folder_name}' ya existe en {UPLOAD_PATH}"

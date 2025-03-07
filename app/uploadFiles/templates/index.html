@@ -244,6 +244,86 @@
                 width: 100%;
             }
         }
+        
+        /* Nuevos estilos para la selección múltiple de archivos */
+        .selected-files {
+            margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: var(--primary-extra-light);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        
+        .file-item:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .file-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-left: 8px;
+        }
+        
+        .file-remove {
+            background: none;
+            border: none;
+            color: var(--primary-dark);
+            cursor: pointer;
+            padding: 0 8px;
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+        
+        .file-remove:hover {
+            color: #ef4444;
+        }
+        
+        .upload-progress {
+            height: 5px;
+            border-radius: 3px;
+            margin-top: 3px;
+            background-color: var(--primary-extra-light);
+            position: relative;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .upload-progress-bar {
+            position: absolute;
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s;
+            width: 0;
+        }
+        
+        .file-size {
+            font-size: 0.75rem;
+            color: var(--text-dark);
+            opacity: 0.7;
+            margin-left: 8px;
+        }
+        
+        .drag-active {
+            border-color: var(--primary-color);
+            background-color: var(--primary-extra-light);
+        }
     </style>
 </head>
 <body>
@@ -263,26 +343,31 @@
                 <div class="card-body">
                     <form id="upload-form" enctype="multipart/form-data">
                         <div class="mb-4">
-                            <label for="file" class="form-label">Archivo</label>
+                            <label for="files" class="form-label">Archivos</label>
                             <div class="file-input-wrapper">
                                 <div class="custom-file-input" id="file-display">
                                     <i class="fas fa-file-upload file-icon"></i>
-                                    <span id="file-name">Arrastra y suelta tu archivo aquí o haz clic para seleccionar</span>
+                                    <span id="file-name">Arrastra y suelta tus archivos aquí o haz clic para seleccionar</span>
                                     <span class="file-hint">Formatos soportados: todos los archivos</span>
                                 </div>
-                                <input type="file" class="form-control" id="file" name="file" required>
+                                <input type="file" class="form-control" id="files" name="files[]" multiple>
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <label for="folder-select" class="form-label">Ubicación del archivo</label>
+                        
+                        <div id="selected-files" class="selected-files">
+                            <!-- Los archivos seleccionados se mostrarán aquí -->
+                        </div>
+                        
+                        <div class="mb-4 mt-4">
+                            <label for="folder-select" class="form-label">Ubicación de los archivos</label>
                             <div class="folder-select-wrapper">
                                 <select id="folder-select" class="form-control">
                                     <option value="">(Raíz)</option>
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-upload me-2"></i> Subir Archivo
+                        <button type="submit" class="btn btn-primary w-100" id="upload-button">
+                            <i class="fas fa-upload me-2"></i> Subir Archivos
                         </button>
                     </form>
                     <div id="response" class="mt-3"></div>
@@ -341,51 +426,222 @@
 
 <script>
     $(document).ready(function() {
-        // Mejorar la experiencia de selección de archivos
-        $('#file').on('change', function() {
-            var fileName = $(this).val().split('\\').pop();
-            if (fileName) {
-                $('#file-name').text(fileName);
-                $('#file-display').css('border-style', 'solid');
-            } else {
-                $('#file-name').text('Arrastra y suelta tu archivo aquí o haz clic para seleccionar');
+        // Variables para controlar los archivos seleccionados
+        var selectedFiles = [];
+        
+        // Función para formatear el tamaño del archivo
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Función para actualizar la vista de archivos seleccionados
+        function updateSelectedFiles() {
+            var $container = $('#selected-files');
+            $container.empty();
+            
+            if (selectedFiles.length === 0) {
+                $('#file-name').text('Arrastra y suelta tus archivos aquí o haz clic para seleccionar');
                 $('#file-display').css('border-style', 'dashed');
+                return;
             }
+            
+            $('#file-name').text(selectedFiles.length + ' archivos seleccionados');
+            $('#file-display').css('border-style', 'solid');
+            
+            selectedFiles.forEach(function(file, index) {
+                var fileIcon = getFileIcon(file.name);
+                var $fileItem = $('<div class="file-item">' +
+                    '<div class="file-info">' +
+                        '<i class="' + fileIcon + '"></i>' +
+                        '<span class="file-name">' + file.name + '</span>' +
+                        '<span class="file-size">' + formatFileSize(file.size) + '</span>' +
+                    '</div>' +
+                    '<button type="button" class="file-remove" data-index="' + index + '">' +
+                        '<i class="fas fa-times"></i>' +
+                    '</button>' +
+                    '<div class="upload-progress">' +
+                        '<div class="upload-progress-bar"></div>' +
+                    '</div>' +
+                '</div>');
+                
+                $container.append($fileItem);
+            });
+            
+            // Evento para eliminar archivos
+            $('.file-remove').on('click', function() {
+                var index = $(this).data('index');
+                selectedFiles.splice(index, 1);
+                updateSelectedFiles();
+            });
+        }
+        
+        // Función para determinar el icono según la extensión del archivo
+        function getFileIcon(filename) {
+            var ext = filename.split('.').pop().toLowerCase();
+            
+            switch(ext) {
+                case 'pdf':
+                    return 'fas fa-file-pdf';
+                case 'doc':
+                case 'docx':
+                    return 'fas fa-file-word';
+                case 'xls':
+                case 'xlsx':
+                    return 'fas fa-file-excel';
+                case 'ppt':
+                case 'pptx':
+                    return 'fas fa-file-powerpoint';
+                case 'jpg':
+                case 'jpeg':
+                case 'png':
+                case 'gif':
+                case 'bmp':
+                    return 'fas fa-file-image';
+                case 'zip':
+                case 'rar':
+                case '7z':
+                    return 'fas fa-file-archive';
+                case 'mp3':
+                case 'wav':
+                case 'ogg':
+                    return 'fas fa-file-audio';
+                case 'mp4':
+                case 'avi':
+                case 'mov':
+                    return 'fas fa-file-video';
+                case 'txt':
+                    return 'fas fa-file-alt';
+                case 'html':
+                case 'css':
+                case 'js':
+                    return 'fas fa-file-code';
+                default:
+                    return 'fas fa-file';
+            }
+        }
+        
+        // Manejar la selección de archivos
+        $('#files').on('change', function(e) {
+            var files = e.target.files;
+            if (files.length === 0) return;
+            
+            // Convertir FileList a array y agregar a los seleccionados
+            for (var i = 0; i < files.length; i++) {
+                selectedFiles.push(files[i]);
+            }
+            
+            updateSelectedFiles();
+        });
+        
+        // Soporte para arrastrar y soltar archivos
+        var $dropZone = $('#file-display');
+        
+        $dropZone.on('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).addClass('drag-active');
+        });
+        
+        $dropZone.on('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).removeClass('drag-active');
+        });
+        
+        $dropZone.on('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).removeClass('drag-active');
+            
+            var files = e.originalEvent.dataTransfer.files;
+            if (files.length === 0) return;
+            
+            // Agregar archivos arrastrados a la lista
+            for (var i = 0; i < files.length; i++) {
+                selectedFiles.push(files[i]);
+            }
+            
+            updateSelectedFiles();
         });
 
         loadFolders(); // Cargar carpetas al iniciar
 
-        // Subir archivo con selección de carpeta
+        // Subir múltiples archivos con selección de carpeta
         $('#upload-form').on('submit', function(event) {
             event.preventDefault();
             
-            var formData = new FormData(this);
+            if (selectedFiles.length === 0) {
+                $('#response').html('<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>Por favor, selecciona al menos un archivo.</div>');
+                return;
+            }
+            
+            var formData = new FormData();
             var selectedFolder = $('#folder-select').val();
             formData.append("folder", selectedFolder);  // Agregar la carpeta seleccionada
-
+            
+            // Agregar todos los archivos seleccionados
+            for (var i = 0; i < selectedFiles.length; i++) {
+                formData.append("files[]", selectedFiles[i]);
+            }
+            
+            $('#upload-button').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Subiendo...');
+            $('.upload-progress').show();
+            
             $.ajax({
                 url: '/upload',
                 type: 'POST',
                 data: formData,
                 processData: false,
                 contentType: false,
+                xhr: function() {
+                    var xhr = new window.XMLHttpRequest();
+                    
+                    xhr.upload.addEventListener("progress", function(evt) {
+                        if (evt.lengthComputable) {
+                            var percentComplete = (evt.loaded / evt.total) * 100;
+                            $('.upload-progress-bar').width(percentComplete + '%');
+                        }
+                    }, false);
+                    
+                    return xhr;
+                },
                 beforeSend: function() {
-                    $('#response').html('<div class="alert alert-info">Subiendo archivo, por favor espera...</div>');
+                    $('#response').html('<div class="alert alert-info">Subiendo archivos, por favor espera...</div>');
                 },
                 success: function(response) {
+                    var message = response.message;
+                    
+                    // Manejar la respuesta de carga parcial
+                    if (response.partial) {
+                        message += '<br><br><strong>Archivos subidos:</strong> ' + response.uploaded.join(', ');
+                        message += '<br><strong>Archivos con error:</strong> ';
+                        response.failed.forEach(function(item) {
+                            message += '<br>' + item.filename + ' - ' + item.error;
+                        });
+                    }
+                    
                     $('#response').html('<div class="alert alert-' + (response.success ? 'success' : 'danger') + '">' + 
                         '<i class="fas fa-' + (response.success ? 'check-circle' : 'exclamation-circle') + ' me-2"></i>' +
-                        response.message + '</div>');
+                        message + '</div>');
                     
                     if (response.success) {
                         // Reiniciar el formulario
                         $('#upload-form')[0].reset();
-                        $('#file-name').text('Arrastra y suelta tu archivo aquí o haz clic para seleccionar');
-                        $('#file-display').css('border-style', 'dashed');
+                        selectedFiles = [];
+                        updateSelectedFiles();
                     }
+                    
+                    $('#upload-button').prop('disabled', false).html('<i class="fas fa-upload me-2"></i> Subir Archivos');
+                    $('.upload-progress').hide();
                 },
                 error: function() {
-                    $('#response').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Error al subir archivo. Intenta de nuevo.</div>');
+                    $('#response').html('<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Error al subir archivos. Intenta de nuevo.</div>');
+                    $('#upload-button').prop('disabled', false).html('<i class="fas fa-upload me-2"></i> Subir Archivos');
+                    $('.upload-progress').hide();
                 }
             });
         });
@@ -458,6 +714,61 @@
             });
         });
     });
+
+
+    function listFilesInFolder(folder) {
+        $.ajax({
+            url: '/list-files',
+            type: 'GET',
+            data: { folder: folder },
+            success: function(response) {
+                if (response.success) {
+                    var files = response.files;
+                    var fileListContainer = $('#file-list');
+                    fileListContainer.empty();  // Limpiar los archivos anteriores
+    
+                    files.forEach(function(file) {
+                        var fileElement = $('<div class="file-item"></div>');
+                        
+                        // Verifica si es un archivo o carpeta
+                        if (file.is_directory) {
+                            fileElement.append('<span class="folder-name">' + file.filename + '</span>');
+                        } else {
+                            var fileExtension = file.filename.split('.').pop().toLowerCase();
+                            
+                            // Mostrar una vista previa para imágenes
+                            if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+                                // Mostrar una vista previa de la imagen
+                                fileElement.append('<img src="/uploads/' + folder + '/' + file.filename + '" class="file-thumbnail" alt="Imagen">');
+                            }
+                            // Mostrar enlace para PDFs
+                            else if (fileExtension === 'pdf') {
+                                fileElement.append('<a href="/uploads/' + folder + '/' + file.filename + '" target="_blank">Ver PDF</a>');
+                            }
+                            // Para otros archivos
+                            else {
+                                fileElement.append('<span class="file-name">' + file.filename + '</span>');
+                            }
+                        }
+    
+                        fileListContainer.append(fileElement);
+                    });
+                } else {
+                    $('#file-list').html('<p class="text-danger">Error al listar archivos: ' + response.message + '</p>');
+                }
+            },
+            error: function() {
+                $('#file-list').html('<p class="text-danger">Hubo un problema al intentar listar los archivos.</p>');
+            }
+        });
+    }
+    
+    // Llamar a la función para listar los archivos en la carpeta deseada
+    $('#folder-select').change(function() {
+        var selectedFolder = $(this).val();
+        listFilesInFolder(selectedFolder);
+    });
+
 
     // Cargar lista de carpetas
     function loadFolders() {
