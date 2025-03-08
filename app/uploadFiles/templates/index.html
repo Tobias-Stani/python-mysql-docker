@@ -324,6 +324,70 @@
             border-color: var(--primary-color);
             background-color: var(--primary-extra-light);
         }
+
+
+
+        /* Estilos para animaciones y transiciones */
+#file-list {
+    transition: opacity 0.2s ease-in-out;
+}
+
+#current-path {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+}
+
+.file-item.folder {
+    transition: background-color 0.15s ease-in-out;
+}
+
+.file-item.folder-clicked {
+    background-color: #cfe2ff;
+}
+
+.btn-clicked {
+    transform: scale(0.95);
+    opacity: 0.9;
+    transition: all 0.15s ease-in-out;
+}
+
+/* Mejora el efecto hover para las carpetas */
+.file-item.folder:hover {
+    background-color: #e2f0ff;
+    transition: background-color 0.15s ease-in-out;
+}
+
+/* Animación para los items de la lista */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.file-item {
+    animation: fadeIn 0.3s ease-out forwards;
+    opacity: 0;
+}
+
+/* Aplicar retraso a los elementos para efecto escalonado */
+.file-item:nth-child(1) { animation-delay: 0.05s; }
+.file-item:nth-child(2) { animation-delay: 0.1s; }
+.file-item:nth-child(3) { animation-delay: 0.15s; }
+.file-item:nth-child(4) { animation-delay: 0.2s; }
+.file-item:nth-child(5) { animation-delay: 0.25s; }
+.file-item:nth-child(n+6) { animation-delay: 0.3s; }
+
     </style>
 </head>
 <body>
@@ -373,6 +437,23 @@
                     <div id="response" class="mt-3"></div>
                 </div>
             </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <i class="fas fa-server me-2"></i> Archivos en el Servidor
+                    <span id="current-path" class="float-end text-muted">(Raíz)</span>
+                </div>
+                <div class="card-body">
+                    <div id="file-list" class="file-list-container">
+                        <p class="text-center text-muted">Haz clic en "Listar Archivos" para ver el contenido del servidor</p>
+                    </div>
+                    <div id="folder-navigation" class="mt-3 d-none">
+                        <button id="go-back" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Volver
+                        </button>
+                    </div>
+                </div>
+            </div>
             
             <div class="card">
                 <div class="card-header">
@@ -409,22 +490,16 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="card mt-4">
-                <div class="card-header">
-                    <i class="fas fa-server me-2"></i> Archivos en el Servidor
-                </div>
-                <div class="card-body">
-                    <div id="file-list" class="file-list-container">
-                        <p class="text-center text-muted">Haz clic en "Listar Archivos" para ver el contenido del servidor</p>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
 
 <script>
+    
+    let currentFolder = ""; // Carpeta actual que estamos explorando
+    let folderHistory = []; // Historial de navegación
+    let isNavigating = false; // Bandera para evitar múltiples clics durante la navegación
+
     $(document).ready(function() {
         // Variables para controlar los archivos seleccionados
         var selectedFiles = [];
@@ -783,6 +858,200 @@
             }
         });
     }
+    
+
+// Función para listar el contenido de una carpeta con animación fluida
+function listFolderContent(folder = "") {
+    // Evitar navegación múltiple si ya está cargando
+    if (isNavigating) return;
+    isNavigating = true;
+    
+    // Mostrar indicador de carga
+    const fileListDiv = document.getElementById('file-list');
+    fileListDiv.innerHTML = `
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status"></div>
+            <span class="ms-2">Cargando contenido...</span>
+        </div>
+    `;
+    
+    // Construir la URL con el parámetro de la carpeta
+    const url = `/list-folder-content${folder ? `?folder=${encodeURIComponent(folder)}` : ''}`;
+    
+    // Añadir una pequeña demora para que se vea la animación (opcional)
+    setTimeout(() => {
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const currentPathSpan = document.getElementById('current-path');
+                const folderNavigation = document.getElementById('folder-navigation');
+                
+                // Actualizar la ruta actual mostrada con animación
+                currentPathSpan.style.opacity = "0";
+                setTimeout(() => {
+                    currentPathSpan.textContent = folder ? folder : '(Raíz)';
+                    currentPathSpan.style.opacity = "1";
+                }, 200);
+                
+                // Mostrar u ocultar el botón de volver según corresponda
+                if (folderHistory.length > 0) {
+                    folderNavigation.classList.remove('d-none');
+                } else {
+                    folderNavigation.classList.add('d-none');
+                }
+                
+                // Preparar el nuevo contenido
+                let html = '';
+                
+                if (data.success) {
+                    html = '<ul class="file-list">';
+                    
+                    // Primero mostrar las carpetas
+                    if (data.folders && data.folders.length > 0) {
+                        data.folders.forEach(item => {
+                            const folderDate = new Date(item.modified * 1000).toLocaleString();
+                            html += `
+                                <li class="file-item folder">
+                                    <div class="file-info">
+                                        <i class="fas fa-folder me-2"></i>
+                                        <span class="file-name" data-folder="${item.name}">${item.name}</span>
+                                    </div>
+                                    <div class="file-meta">
+                                        <span class="file-date">${folderDate}</span>
+                                    </div>
+                                </li>
+                            `;
+                        });
+                    }
+                    
+                    // Luego mostrar los archivos
+                    if (data.files && data.files.length > 0) {
+                        data.files.forEach(item => {
+                            const fileDate = new Date(item.modified * 1000).toLocaleString();
+                            const fileSize = formatFileSize(item.size);
+                            html += `
+                                <li class="file-item">
+                                    <div class="file-info">
+                                        <i class="fas fa-file me-2"></i>
+                                        <span class="file-name">${item.name}</span>
+                                    </div>
+                                    <div class="file-meta">
+                                        <span class="file-size">${fileSize}</span>
+                                        <span class="file-date">${fileDate}</span>
+                                    </div>
+                                </li>
+                            `;
+                        });
+                    }
+                    
+                    // Si no hay archivos ni carpetas
+                    if ((!data.folders || data.folders.length === 0) && (!data.files || data.files.length === 0)) {
+                        html += '<li class="empty-folder"><i class="fas fa-folder-open me-2"></i> Esta carpeta está vacía</li>';
+                    }
+                    
+                    html += '</ul>';
+                } else {
+                    html = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i> ${data.message}
+                        </div>
+                    `;
+                }
+                
+                // Agregar el contenido con animación fade
+                fileListDiv.style.opacity = "0";
+                setTimeout(() => {
+                    fileListDiv.innerHTML = html;
+                    fileListDiv.style.opacity = "1";
+                    
+                    // Agregar eventos click a las carpetas para navegación
+                    const folderElements = fileListDiv.querySelectorAll('.file-item.folder .file-name');
+                    folderElements.forEach(folder => {
+                        folder.addEventListener('click', function() {
+                            // Efecto visual de clic
+                            this.closest('.file-item').classList.add('folder-clicked');
+                            
+                            const folderName = this.getAttribute('data-folder');
+                            setTimeout(() => {
+                                navigateToFolder(folderName);
+                            }, 150); // Pequeña demora para ver el efecto
+                        });
+                    });
+                    
+                    // Navegación completada
+                    isNavigating = false;
+                }, 200);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                fileListDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i> Error de conexión: ${error.message}
+                    </div>
+                `;
+                isNavigating = false;
+            });
+    }, 200);
+}
+
+// Función para navegar a una carpeta
+function navigateToFolder(folderName) {
+    // Guardar la carpeta actual en el historial
+    folderHistory.push(currentFolder);
+    
+    // Construir la nueva ruta
+    currentFolder = currentFolder ? `${currentFolder}/${folderName}` : folderName;
+    
+    // Listar el contenido de la nueva carpeta
+    listFolderContent(currentFolder);
+}
+
+// Función para volver a la carpeta anterior con animación
+document.getElementById('go-back').addEventListener('click', function() {
+    if (folderHistory.length > 0 && !isNavigating) {
+        // Efecto visual en el botón
+        this.classList.add('btn-clicked');
+        
+        setTimeout(() => {
+            this.classList.remove('btn-clicked');
+            // Recuperar la última carpeta del historial
+            currentFolder = folderHistory.pop();
+            
+            // Listar el contenido de la carpeta anterior
+            listFolderContent(currentFolder);
+        }, 150);
+    }
+});
+
+// Evento para listar archivos con animación
+document.getElementById('list-files').addEventListener('click', function() {
+    if (isNavigating) return;
+    
+    // Efecto visual en el botón
+    this.classList.add('btn-clicked');
+    
+    setTimeout(() => {
+        this.classList.remove('btn-clicked');
+        // Reiniciar la navegación
+        currentFolder = "";
+        folderHistory = [];
+        
+        // Listar el contenido de la carpeta raíz
+        listFolderContent();
+    }, 150);
+});
+
+// Utilidad para formatear el tamaño de archivos
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 </script>
 
 </body>

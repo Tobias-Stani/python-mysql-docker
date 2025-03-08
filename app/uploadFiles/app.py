@@ -160,6 +160,65 @@ def create_folder():
         return jsonify({"success": False, "message": str(e)})
 
 
+@app.route("/list-folder-content", methods=["GET"])
+def list_folder_content():
+    """
+    Endpoint para listar el contenido de una carpeta específica en el servidor remoto.
+    Recibe el nombre de la carpeta como parámetro en la URL.
+    """
+    folder_name = request.args.get("folder", "")
+    
+    # Determinar la ruta completa (usar la ruta base si no se especifica carpeta)
+    remote_path = os.path.join(UPLOAD_PATH, folder_name) if folder_name else UPLOAD_PATH
+    
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(SSH_HOST, username=SSH_USER, password=SSH_PASSWORD, timeout=5)
+        
+        sftp = client.open_sftp()
+        
+        try:
+            # Listar todos los archivos y carpetas en la ruta
+            items = sftp.listdir_attr(remote_path)
+            
+            # Separar archivos y carpetas, e incluir metadatos
+            files = []
+            folders = []
+            
+            for item in items:
+                is_dir = bool(item.st_mode & 0o40000)  # Verifica si es un directorio
+                entry = {
+                    "name": item.filename,
+                    "size": item.st_size,
+                    "modified": item.st_mtime,
+                    "is_directory": is_dir
+                }
+                
+                if is_dir:
+                    folders.append(entry)
+                else:
+                    files.append(entry)
+            
+            result = {
+                "success": True,
+                "path": remote_path,
+                "folders": folders,
+                "files": files,
+                "total_items": len(items)
+            }
+        except FileNotFoundError:
+            result = {
+                "success": False,
+                "message": f"La carpeta '{remote_path}' no existe en el servidor"
+            }
+        
+        sftp.close()
+        client.close()
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
 
 if __name__ == "__main__":
     if not os.path.exists("templates"):
