@@ -1,10 +1,15 @@
 from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
 import paramiko
 import os
 
 load_dotenv()
 app = Flask(__name__, template_folder="templates")
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 * 1024  # 2GB
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+
 
 # Credenciales SSH
 SSH_HOST = os.getenv("SSH_HOST")
@@ -71,14 +76,16 @@ def upload_file():
         for file in files:
             try:
                 file_path = os.path.join(remote_path, file.filename)
-                temp_path = f"/tmp/{file.filename}"
-                file.save(temp_path)  # Guardar temporalmente en el servidor local
-                
-                sftp.put(temp_path, file_path)  # Subir archivo al servidor remoto
-                os.remove(temp_path)  # Eliminar el archivo temporal
+
+                # Subir directamente sin guardar en /tmp
+                with sftp.file(file_path, 'wb') as remote_file:
+                    file.stream.seek(0)  # Asegurar que el puntero del archivo esté al inicio
+                    remote_file.write(file.stream.read())  # Escribir los datos directamente
+
                 uploaded_files.append(file.filename)
             except Exception as e:
                 failed_files.append({"filename": file.filename, "error": str(e)})
+
         
         sftp.close()
         client.close()
