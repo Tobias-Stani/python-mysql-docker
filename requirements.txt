@@ -14,3 +14,4 @@ tqdm
 pyfiglet
 rich
 fastapi
+pymupdf
