@@ -1,15 +1,20 @@
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
 from flask import jsonify
 import pandas as pd
 import plotly.express as px
 import plotly.io as pio
+import os
+
 
 # Configurar Flask
 app = Flask(__name__)
 
+load_dotenv()
+
 # Configurar la base de datos
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3307/HistorialPartidos'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
