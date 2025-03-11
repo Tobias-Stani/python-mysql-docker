@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Estadísticas de Partidos</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    
+    <!-- jQuery y DataTables -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #000000;
+            --bg-card: #121212;
+            --bg-card-header: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #d3d3d3;
+            --accent-blue: #0d6efd;
+            --accent-red: #dc3545;
+            --accent-yellow: #ffc107;
+            --accent-green: #198754;
+            --border-color: #333333;
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .page-header {
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+        
+        .section {
+            margin-bottom: 3rem;
+        }
+        
+        .section-title {
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-blue);
+            display: inline-block;
+        }
+        
+        .card {
+            background-color: var(--bg-card);
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: var(--bg-card-header);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+        }
+        
+        .card-title {
+            margin-bottom: 0;
+            color: var(--text-primary);
+        }
+        
+        .stats-card {
+            text-align: center;
+            padding: 1.5rem;
+            height: 100%;
+        }
+        
+        .stats-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        
+        /* Tabs styling */
+        .nav-tabs {
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--text-secondary);
+            background-color: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            padding: 0.75rem 1.25rem;
+            margin-right: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent-blue);
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--accent-blue);
+            background-color: transparent;
+            border-bottom-color: var(--accent-blue);
+        }
+        
+        /* Table styling */
+        .table {
+            color: var(--text-primary);
+            margin-bottom: 0;
+        }
+        
+        .table thead th {
+            background-color: var(--bg-card-header);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* DataTables custom styling */
+        .dataTables_wrapper .dataTables_length, 
+        .dataTables_wrapper .dataTables_filter, 
+        .dataTables_wrapper .dataTables_info, 
+        .dataTables_wrapper .dataTables_processing, 
+        .dataTables_wrapper .dataTables_paginate {
+            color: var(--text-secondary) !important;
+            padding: 1rem;
+        }
+        
+        .dataTables_wrapper .dataTables_length select, 
+        .dataTables_wrapper .dataTables_filter input {
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            color: var(--text-secondary) !important;
+            border: 1px solid var(--border-color) !important;
+            background: var(--bg-card) !important;
+            border-radius: 4px;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            color: var(--text-primary) !important;
+            background: var(--accent-blue) !important;
+            border-color: var(--accent-blue) !important;
+        }
+        
+        /* Efectividad stats */
+        .stat-box {
+            background-color: var(--bg-card-header);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .victorias { color: var(--accent-green); }
+        .empates { color: var(--accent-yellow); }
+        .derrotas { color: var(--accent-red); }
+        .efectividad { color: var(--accent-blue); }
+        
+        .chart-container {
+            width: 100%; /* Hace que el contenedor ocupe el 100% del ancho */
+            height: 40%; /* Establece una altura fija para los gráficos (ajústalo a lo que necesites) */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px; /* Espaciado entre gráficos */
+        }
+        
+        canvas {
+            width: 80% !important; /* Asegura que el canvas ocupe todo el ancho del contenedor */
+            height: auto !important; /* Mantiene la relación de aspecto del gráfico */
+            max-width: 80% !important; /* Evita que el gráfico se estire más allá de su tamaño original */
+        }
+        
+        
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <h1>📊 Estadísticas de Partidos</h1>
+        </header>
+        
+        <!-- Resumen de Estadísticas -->
+        <section class="section">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="stats-card">
+                            <h5>📌 Total de Partidos</h5>
+                            <div id="totalPartidos" class="stats-value text-info">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="stats-card">
+                            <h5>📅 Partidos por Año</h5>
+                            <div id="partidosPorAno" class="stats-value text-warning">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="stats-card">
+                            <h5>🕐 Último Partido</h5>
+                            <div id="ultimoPartido" class="stats-value text-success">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Navegación por pestañas -->
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="graficos-tab" data-bs-toggle="tab" data-bs-target="#graficos" type="button" role="tab" aria-controls="graficos" aria-selected="true">Gráficos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tablas-tab" data-bs-toggle="tab" data-bs-target="#tablas" type="button" role="tab" aria-controls="tablas" aria-selected="false">Tablas</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="efectividad-tab" data-bs-toggle="tab" data-bs-target="#efectividad" type="button" role="tab" aria-controls="efectividad" aria-selected="false">Efectividad</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="myTabContent">
+            <!-- Sección de Gráficos -->
+            <div class="tab-pane fade show active" id="graficos" role="tabpanel" aria-labelledby="graficos-tab">
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">⚽ Goles por Equipo</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoGoles"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">🏆 Partidos por Competencia</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoCompetencias"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">🔴 Partidos con River vs. Otros</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoRiver"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">📊 Efectividad de Asistencia</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="efectividadChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">📈 Estadísticas de River</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="riverChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">📊 Rachas de River</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="rachaChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">📉 Comparación de Partidos</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoComparacion"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                                        
+
+                </div>
+            </div>
+            
+            <!-- Sección de Tablas -->
+            <div class="tab-pane fade" id="tablas" role="tabpanel" aria-labelledby="tablas-tab">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">🔎 Todos los Partidos</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table id="tablaPartidos" class="table table-dark">
+                                <thead>
+                                    <tr>
+                                        <th>Local</th>
+                                        <th>Visitante</th>
+                                        <th>Goles Local</th>
+                                        <th>Goles Visitante</th>
+                                        <th>Competencia</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">📍 Partidos de River como Visitante</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table id="tablaPartidosVisitante" class="table table-dark">
+                                <thead>
+                                    <tr>
+                                        <th>Local</th>
+                                        <th>Goles Local</th>
+                                        <th>Goles Visitante</th>
+                                        <th>Competencia</th>
+                                        <th>Fecha</th>
+                                        <th>Ver Video</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">📍 Partidos de Neutral</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table id="tablaPartidosNeutral" class="table table-dark">
+                                <thead>
+                                    <tr>
+                                        <th>Local</th>
+                                        <th>Gol Local</th>
+                                        <th>Gol Visitante</th>
+                                        <th>Visitante</th>
+                                        <th>Competencia</th>
+                                        <th>Fecha</th>
+                                        <th>Video</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección de Efectividad -->
+            <div class="tab-pane fade" id="efectividad" role="tabpanel" aria-labelledby="efectividad-tab">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">📊 Efectividad de River como Visitante</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Total</div>
+                                            <div id="totalPartidosVisitante" class="stat-value">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Victorias</div>
+                                            <div id="victoriasVisitante" class="stat-value victorias">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Empates</div>
+                                            <div id="empatesVisitante" class="stat-value empates">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Derrotas</div>
+                                            <div id="derrotasVisitante" class="stat-value derrotas">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mb-4">
+                                    <div class="stat-label">Efectividad</div>
+                                    <div id="efectividadVisitante" class="stats-value efectividad">-</div>
+                                </div>
+                                
+                                <div class="chart-container">
+                                    <canvas id="graficoVisitante"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">📊 Efectividad en Partidos Neutrales</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Total</div>
+                                            <div id="totalPartidosNeutral" class="stat-value">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Victorias</div>
+                                            <div id="victoriasNeutral" class="stat-value victorias">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Empates</div>
+                                            <div id="empatesNeutral" class="stat-value empates">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Derrotas</div>
+                                            <div id="derrotasNeutral" class="stat-value derrotas">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mb-4">
+                                    <div class="stat-label">Efectividad</div>
+                                    <div id="efectividadNeutral" class="stats-value efectividad">%</div>
+                                </div>
+                                
+                                <div class="chart-container">
+                                    <canvas id="graficoNeutral"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/data')
+            .then(response => response.json())
+            .then(data => {
+                console.log("📊 Datos recibidos en el frontend:", data);  // 🔍 Verificar los datos en la consola
+        
+                if (!data || data.length === 0) {
+                    document.getElementById("graficos").innerHTML = "<h3>No hay datos disponibles</h3>";
+                    return;
+                }
+        
+                let totalPartidos = data.length;
+                let partidosPorAno = {};
+                let equipos = {};
+                let competencias = {};
+                let riverPartidos = 0;
+                let otrosPartidos = 0;
+                let ultimoPartidoFecha = "No disponible";
+        
+                data.forEach(partido => {
+                    let anio = new Date(partido.fecha).getFullYear();
+                    if (!partidosPorAno[anio]) partidosPorAno[anio] = 0;
+                    partidosPorAno[anio]++;
+        
+                    let local = partido.local.trim();
+                    let visitante = partido.visitante.trim();
+        
+                    if (!equipos[local]) equipos[local] = 0;
+                    if (!equipos[visitante]) equipos[visitante] = 0;
+        
+                    equipos[local] += partido.gol_local;
+                    equipos[visitante] += partido.gol_visitante;
+        
+                    if (!competencias[partido.competencia]) competencias[partido.competencia] = 0;
+                    competencias[partido.competencia]++;
+        
+                    if (local.toLowerCase().includes("river") || visitante.toLowerCase().includes("river")) {
+                        riverPartidos++;
+                    } else {
+                        otrosPartidos++;
+                    }
+        
+                    if (!ultimoPartidoFecha || new Date(partido.fecha) > new Date(ultimoPartidoFecha)) {
+                        ultimoPartidoFecha = partido.fecha;
+                    }
+                });
+
+                // Si la tabla ya está inicializada, la destruimos antes de volver a inicializar
+                if ($.fn.DataTable.isDataTable('#tablaPartidos')) {
+                    $('#tablaPartidos').DataTable().destroy();
+                }
+                
+                // Inicializar la tabla principal
+                $('#tablaPartidos').DataTable({
+                    data: data,
+                    columns: [
+                        { data: 'local' },
+                        { data: 'visitante' },
+                        { data: 'gol_local' },
+                        { data: 'gol_visitante' },
+                        { data: 'competencia' },
+                        { data: 'fecha' }
+                    ],
+                    "paging": true,
+                    "searching": true,
+                    "ordering": true,
+                    "order": [[5, "desc"]],  // Ordenar por fecha descendente
+                    "pageLength": 5,
+                    "lengthChange": false,
+                    "language": {
+                        "zeroRecords": "No se encontraron partidos",
+                        "info": "Mostrando _START_ a _END_ de _TOTAL_ partidos",
+                        "infoEmpty": "No hay partidos disponibles",
+                        "search": "Buscar:",
+                        "paginate": {
+                            "first": "Primero",
+                            "last": "Último",
+                            "next": "➡️",
+                            "previous": "⬅️"
+                        }
+                    }
+                });
+        
+                // ✅ Actualizar estadísticas en pantalla
+                document.getElementById("totalPartidos").innerText = totalPartidos;
+                document.getElementById("partidosPorAno").innerText = Object.keys(partidosPorAno)
+                    .map(a => `${a}: ${partidosPorAno[a]}`)
+                    .join(', ');
+                document.getElementById("ultimoPartido").innerText = ultimoPartidoFecha;
+        
+                // ✅ Verificación de datos antes de generar gráficos
+                if (Object.keys(equipos).length > 0) {
+                    new Chart(document.getElementById('graficoGoles'), {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(equipos),
+                            datasets: [{
+                                label: 'Goles Totales',
+                                data: Object.values(equipos),
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                    });
+                }
+        
+                if (Object.keys(competencias).length > 0) {
+                    new Chart(document.getElementById('graficoCompetencias'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(competencias),
+                            datasets: [{
+                                data: Object.values(competencias),
+                                backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff']
+                            }]
+                        },
+                        options: { responsive: true }
+                    });
+                }
+        
+                if (riverPartidos + otrosPartidos > 0) {
+                    new Chart(document.getElementById('graficoRiver'), {
+                        type: 'pie',
+                        data: {
+                            labels: ["Partidos con River", "Otros partidos"],
+                            datasets: [{
+                                data: [riverPartidos, otrosPartidos],
+                                backgroundColor: ['#ff0000', '#cccccc']
+                            }]
+                        },
+                        options: { responsive: true }
+                    });
+                }
+            })
+            .catch(error => console.error('❌ Error en fetch:', error));
+        });        
+    </script>
+        
+    <script>
+        //obtener el ultimo partido
+        document.addEventListener("DOMContentLoaded", function () {
+            setTimeout(cargarUltimoPartido, 500); // Retrasa la ejecución 1 segundo
+        });
+        
+        function cargarUltimoPartido() {
+            fetch('/ultimo_partido')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Último partido recibido:", data);
+        
+                    const elementoUltimoPartido = document.getElementById("ultimoPartido");
+        
+                    if (!data || data.error || !data.local || !data.visitante) {
+                        elementoUltimoPartido.innerText = "No disponible";
+                    } else {
+                        elementoUltimoPartido.innerText = 
+                            `${data.local} (${data.gol_local}) vs (${data.gol_visitante}) ${data.visitante} - ${data.fecha}`;
+                    }
+                })
+                .catch(error => console.error('Error en fetch último partido:', error));
+        }             
+    </script>
+
+    
+    <script>
+        //efectividad de asistencais.
+        function cargarResultados() {
+            fetch('/resultados')
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Resultados obtenidos:", data); // Ver datos en consola
+    
+                    if (data.error) {
+                        document.getElementById('efectividadChart').innerText = "No hay datos disponibles";
+                        return;
+                    }
+    
+                    const ctx = document.getElementById('efectividadChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Victorias', 'Empates', 'Derrotas'],
+                            datasets: [{
+                                label: 'Cantidad',
+                                data: [data.victoria, data.empate, data.derrota],
+                                backgroundColor: ['#A8D5BA', '#F5E6CC', '#F2B5D4'], // Colores pastel
+                                borderColor: ['#7BB390', '#E6C9A8', '#E08FB0'], // Bordes pastel más oscuros
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    precision: 0,
+                                    title: {
+                                        display: true,
+                                        text: 'Cantidad'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(tooltipItem) {
+                                            return tooltipItem.label + ': ' + tooltipItem.raw;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error al obtener los resultados:', error));
+        }
+    
+        // Retrasa la carga del gráfico 1 segundo
+        setTimeout(cargarResultados, 1000);
+    </script>
+
+    <script>
+        function cargarRiverStats() {
+            fetch('/river_stats')
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Estadísticas de River:", data);
+    
+                    if (data.error) {
+                        document.getElementById('riverChart').innerText = "No hay datos disponibles";
+                        return;
+                    }
+    
+                    const ctx = document.getElementById('riverChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Victorias', 'Empates', 'Derrotas'],
+                            datasets: [{
+                                label: 'Partidos de River',
+                                data: [data.victorias, data.empates, data.derrotas],
+                                backgroundColor: ['#A8D5BA', '#F5E6CC', '#F2B5D4'], // Colores pastel
+                                borderColor: ['#7BB390', '#E6C9A8', '#E08FB0'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    precision: 0,
+                                    title: {
+                                        display: true,
+                                        text: 'Cantidad'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(tooltipItem) {
+                                            return tooltipItem.label + ': ' + tooltipItem.raw;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error al obtener las estadísticas de River:', error));
+        }
+    
+        // Cargar después de 1 segundo para asegurar datos
+        setTimeout(cargarRiverStats, 1000);
+    </script>
+
+    <script>
+        //mejor y peor racha
+        fetch('/river_streaks')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("rachaChart").innerHTML = "<p>No hay datos disponibles</p>";
+                    return;
+                }
+    
+                const ctx = document.getElementById("rachaChart").getContext("2d");
+    
+                new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels: ["Mejor racha invicta", "Peor racha sin ganar"],
+                        datasets: [{
+                            label: "Cantidad de partidos",
+                            data: [data.mejor_racha_invicta, data.peor_racha_sin_ganar],
+                            backgroundColor: ["#4CAF50", "#FF5733"], // Verde para invicto, rojo para sin ganar
+                            borderColor: ["#388E3C", "#C70039"],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: "Mejor y Peor Racha de River"
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error("Error cargando las rachas:", error));
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/partidos_visitante')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("tablaPartidosVisitante").innerHTML = 
+                            `<tr><td colspan="6" class="text-center text-warning">${data.error}</td></tr>`;
+                        return;
+                    }
+    
+                    let tableBody = document.querySelector("#tablaPartidosVisitante tbody");
+                    tableBody.innerHTML = "";  // Limpiar antes de agregar datos
+    
+                    data.forEach(partido => {
+                        let videoButton = partido.link ? 
+                            `<a href="${partido.link}" target="_blank" class="btn btn-primary btn-sm">📺 Ver</a>` : 
+                            `<span class="text-muted">No disponible</span>`;
+    
+                        let row = `
+                            <tr>
+                                <td>${partido.local}</td>
+                                <td>${partido.gol_local}</td>
+                                <td>${partido.gol_visitante}</td>
+                                <td>${partido.competencia}</td>
+                                <td>${partido.fecha}</td>
+                                <td>${videoButton}</td>
+                            </tr>
+                        `;
+                        tableBody.innerHTML += row;
+                    });
+    
+                    // Si la tabla ya está inicializada, la destruimos antes de volver a inicializar
+                    if ($.fn.DataTable.isDataTable('#tablaPartidosVisitante')) {
+                        $('#tablaPartidosVisitante').DataTable().destroy();
+                    }
+    
+                    // Volver a inicializar DataTables con orden en la fecha (columna 4) descendente
+                    $('#tablaPartidosVisitante').DataTable({
+                        "paging": true,
+                        "searching": true,
+                        "ordering": true,
+                        "order": [[4, "desc"]],  // 👈 Asegura que la columna de fecha se ordena descendente
+                        "pageLength": 5,
+                        "lengthChange": false,
+                        "language": {
+                            "zeroRecords": "No se encontraron partidos",
+                            "info": "Mostrando _START_ a _END_ de _TOTAL_ partidos",
+                            "infoEmpty": "No hay partidos disponibles",
+                            "search": "Buscar:",
+                            "paginate": {
+                                "first": "Primero",
+                                "last": "Último",
+                                "next": "➡️",
+                                "previous": "⬅️"
+                            }
+                        }
+                    });
+    
+                })
+                .catch(error => console.error("Error al cargar partidos visitante:", error));
+        });
+    </script>    
+
+    <script>
+        //estadistitcas river como visitante
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/estadisticas_visitante')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("totalPartidosVisitante").innerText = data.total;
+                    document.getElementById("victoriasVisitante").innerText = data.victorias;
+                    document.getElementById("empatesVisitante").innerText = data.empates;
+                    document.getElementById("derrotasVisitante").innerText = data.derrotas;
+                    document.getElementById("efectividadVisitante").innerText = data.efectividad;
+        
+                    // Generar gráfico de efectividad
+                    const ctx = document.getElementById("graficoVisitante").getContext("2d");
+                    new Chart(ctx, {
+                        type: "bar",
+                        data: {
+                            labels: ["Victorias", "Empates", "Derrotas"],
+                            datasets: [{
+                                label: "Cantidad",
+                                data: [data.victorias, data.empates, data.derrotas],
+                                backgroundColor: ["#4CAF50", "#FFC107", "#FF5733"], // Verde, Amarillo, Rojo
+                                borderColor: "#FFFFFF",
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                x: { ticks: { color: "#FFFFFF" } },
+                                y: { ticks: { color: "#FFFFFF", beginAtZero: true } }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error("Error al cargar estadísticas de visitante:", error));
+        });
+        </script>
+        
+
+    <script>
+        //Partidos de neutral
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/partidos_neutral')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.length) {
+                        document.querySelector("#tablaPartidosNeutral tbody").innerHTML = 
+                            `<tr><td colspan="7" class="text-center text-warning">No hay partidos registrados</td></tr>`;
+                        return;
+                    }
+    
+                    let tableBody = document.querySelector("#tablaPartidosNeutral tbody");
+                    tableBody.innerHTML = "";  
+    
+                    data.forEach(partido => {
+                        let videoButton = partido.link ? 
+                            `<a href="${partido.link}" target="_blank" class="btn btn-primary btn-sm">📺 Ver</a>` : 
+                            `<span class="text-muted">No disponible</span>`;
+    
+                        let row = `
+                            <tr>
+                                <td>${partido.local}</td>
+                                <td>${partido.gol_local}</td>
+                                <td>${partido.gol_visitante}</td>
+                                <td>${partido.visitante}</td>
+                                <td>${partido.competencia}</td>
+                                <td>${partido.fecha}</td>
+                                <td>${videoButton}</td>
+                            </tr>
+                        `;
+                        tableBody.innerHTML += row;
+                    });
+    
+                    // Inicializar DataTables
+                    $('#tablaPartidosNeutral').DataTable({
+                        "paging": true,
+                        "searching": true,
+                        "ordering": true,
+                        "pageLength": 5,
+                        "lengthChange": false,
+                        "order": [[5, "desc"]],  // Ordena por fecha descendente
+                        "language": {
+                            "zeroRecords": "No se encontraron partidos",
+                            "info": "Mostrando _START_ a _END_ de _TOTAL_ partidos",
+                            "infoEmpty": "No hay partidos disponibles",
+                            "search": "Buscar:",
+                            "paginate": {
+                                "first": "Primero",
+                                "last": "Último",
+                                "next": "➡️",
+                                "previous": "⬅️"
+                            }
+                        }
+                    });
+    
+                })
+                .catch(error => console.error("Error al cargar partidos neutral:", error));
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/efectividad_neutral')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.querySelector(".card-body").innerHTML = `<p class="text-danger">${data.error}</p>`;
+                        return;
+                    }
+    
+                    document.getElementById("totalPartidosNeutral").innerText = data.total_partidos;
+                    document.getElementById("victoriasNeutral").innerText = data.victorias;
+                    document.getElementById("empatesNeutral").innerText = data.empates;
+                    document.getElementById("derrotasNeutral").innerText = data.derrotas;
+                    document.getElementById("efectividadNeutral").innerText = data.efectividad;
+    
+                    // Crear gráfico
+                    let ctx = document.getElementById('graficoNeutral').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Victorias', 'Empates', 'Derrotas'],
+                            datasets: [{
+                                label: 'Cantidad de Partidos',
+                                data: [data.victorias, data.empates, data.derrotas],
+                                backgroundColor: ['#76c7c0', '#f4d35e', '#ee6c4d'],
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { enabled: true }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error("Error al cargar efectividad neutral:", error));
+        });
+    </script>
+
+    <script>
+        //grafico para ver partidos como visitante, neutral y local, grafico lineal.
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/partidos_comparacion')
+                .then(response => response.json())
+                .then(data => {
+                    let anios = [...new Set([...data.total.map(d => d.anio), ...data.river.map(d => d.anio), ...data.river_visitante.map(d => d.anio), ...data.neutral.map(d => d.anio)])].sort();
+                    
+                    let totalPartidos = anios.map(anio => {
+                        let partido = data.total.find(d => d.anio === anio);
+                        return partido ? partido.cantidad : 0;
+                    });
+    
+                    let riverPartidos = anios.map(anio => {
+                        let partido = data.river.find(d => d.anio === anio);
+                        return partido ? partido.cantidad : 0;
+                    });
+    
+                    let riverVisitante = anios.map(anio => {
+                        let partido = data.river_visitante.find(d => d.anio === anio);
+                        return partido ? partido.cantidad : 0;
+                    });
+    
+                    let partidosNeutrales = anios.map(anio => {
+                        let partido = data.neutral.find(d => d.anio === anio);
+                        return partido ? partido.cantidad : 0;
+                    });
+    
+                    let ctx = document.getElementById('graficoComparacion').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: anios,
+                            datasets: [
+                                {
+                                    label: 'Total de Partidos',
+                                    data: totalPartidos,
+                                    borderColor: '#ffcc00',
+                                    backgroundColor: 'rgba(255, 204, 0, 0.2)',
+                                    borderWidth: 2,
+                                    tension: 0.2
+                                },
+                                {
+                                    label: 'Partidos de River',
+                                    data: riverPartidos,
+                                    borderColor: '#ff5733',
+                                    backgroundColor: 'rgba(255, 87, 51, 0.2)',
+                                    borderWidth: 2,
+                                    tension: 0.2
+                                },
+                                {
+                                    label: 'River como Visitante',
+                                    data: riverVisitante,
+                                    borderColor: '#007bff',
+                                    backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                                    borderWidth: 2,
+                                    tension: 0.2
+                                },
+                                {
+                                    label: 'Partidos Neutrales',
+                                    data: partidosNeutrales,
+                                    borderColor: '#28a745',
+                                    backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                                    borderWidth: 2,
+                                    tension: 0.2
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: true }
+                            },
+                            scales: {
+                                x: { title: { display: true, text: 'Año' } },
+                                y: { title: { display: true, text: 'Cantidad de Partidos' }, beginAtZero: true }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error("Error al cargar datos del gráfico:", error));
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
