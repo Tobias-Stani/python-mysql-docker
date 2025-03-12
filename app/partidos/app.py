@@ -58,6 +58,42 @@ def get_data():
     data = [{column.name: getattr(partido, column.name) for column in Partido.__table__.columns} for partido in partidos]
     return jsonify(data)
 
+
+@app.route('/goles_river_anio')
+def goles_river_anio():
+    goles_river = db.session.query(
+        db.func.year(Partido.fecha).label("anio"), 
+        db.func.sum(
+            db.case((Partido.local == "River", Partido.gol_local), else_=0)
+        ) + db.func.sum(
+            db.case((Partido.visitante == "River", Partido.gol_visitante), else_=0)
+        )
+    ).group_by(db.func.year(Partido.fecha)).all()
+
+    data = {"goles_por_anio": {str(anio): goles for anio, goles in goles_river}}
+    return jsonify(data)
+
+
+#Obtiene la cantidad de partios totales y los partidos por anio.
+@app.route('/estadisticas_partidos')
+def estadisticas_partidos():
+    # Obtener el total de partidos
+    total_partidos = db.session.query(db.func.count(Partido.id)).scalar()
+
+    # Obtener la cantidad de partidos por año
+    partidos_por_ano = db.session.query(
+        db.func.year(Partido.fecha), db.func.count(Partido.id)
+    ).group_by(db.func.year(Partido.fecha)).all()
+
+    # Convertir los datos en JSON
+    data = {
+        "total_partidos": total_partidos,
+        "partidos_por_ano": {str(anio): cantidad for anio, cantidad in partidos_por_ano}
+    }
+
+    return jsonify(data)
+
+
 @app.route('/ultimo_partido')
 def ultimo_partido():
     ultimo = Partido.query.order_by(Partido.fecha.desc()).first()
@@ -73,6 +109,39 @@ def ultimo_partido():
         "competencia": ultimo.competencia,
         "fecha": ultimo.fecha.strftime('%Y-%m-%d'),
     }
+
+@app.route('/partidos_por_competencia')
+def partidos_por_competencia():
+    # Consulta para contar los partidos agrupados por competencia
+    partidos_competencia = db.session.query(
+        Partido.competencia, db.func.count(Partido.id)
+    ).group_by(Partido.competencia).all()
+
+    # Convertir resultados en JSON
+    data = {
+        "competencias": [{"competencia": competencia, "cantidad": cantidad} for competencia, cantidad in partidos_competencia]
+    }
+
+    return jsonify(data)
+
+@app.route('/partidos_local_vs_no_local')
+def partidos_local_vs_no_local():
+    # Contar partidos donde River es local
+    river_local = db.session.query(db.func.count(Partido.id))\
+        .filter(Partido.local == "River").scalar()
+
+    # Contar partidos donde River NO es local
+    no_river_local = db.session.query(db.func.count(Partido.id))\
+        .filter(Partido.local != "River").scalar()
+
+    # Devolver datos en formato JSON
+    data = {
+        "river_local": river_local,
+        "no_river_local": no_river_local
+    }
+
+    return jsonify(data)
+
 
 #obtiene los resultados de los partidos para sabear victorias, empates etc. 
 @app.route('/resultados')

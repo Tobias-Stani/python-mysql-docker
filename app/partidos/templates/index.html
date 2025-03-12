@@ -273,7 +273,7 @@
                     <div class="col-md-6 col-lg-4">
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="card-title">⚽ Goles por Equipo</h5>
+                                <h5 class="card-title">⚽ Goles River por Año Vistos en cancha</h5>
                             </div>
                             <div class="card-body">
                                 <div class="chart-container">
@@ -281,7 +281,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>                                       
                     <div class="col-md-6 col-lg-4">
                         <div class="card">
                             <div class="card-header">
@@ -297,11 +297,11 @@
                     <div class="col-md-6 col-lg-4">
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="card-title">🔴 Partidos con River vs. Otros</h5>
+                                <h5 class="card-title">🏟️ River Local vs. No Local</h5>
                             </div>
                             <div class="card-body">
                                 <div class="chart-container">
-                                    <canvas id="graficoRiver"></canvas>
+                                    <canvas id="graficoLocalNoLocal"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -530,146 +530,135 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            fetch('/data')
-            .then(response => response.json())
-            .then(data => {
-                console.log("📊 Datos recibidos en el frontend:", data);  // 🔍 Verificar los datos en la consola
-        
-                if (!data || data.length === 0) {
-                    document.getElementById("graficos").innerHTML = "<h3>No hay datos disponibles</h3>";
-                    return;
-                }
-        
-                let totalPartidos = data.length;
-                let partidosPorAno = {};
-                let equipos = {};
-                let competencias = {};
-                let riverPartidos = 0;
-                let otrosPartidos = 0;
-                let ultimoPartidoFecha = "No disponible";
-        
-                data.forEach(partido => {
-                    let anio = new Date(partido.fecha).getFullYear();
-                    if (!partidosPorAno[anio]) partidosPorAno[anio] = 0;
-                    partidosPorAno[anio]++;
-        
-                    let local = partido.local.trim();
-                    let visitante = partido.visitante.trim();
-        
-                    if (!equipos[local]) equipos[local] = 0;
-                    if (!equipos[visitante]) equipos[visitante] = 0;
-        
-                    equipos[local] += partido.gol_local;
-                    equipos[visitante] += partido.gol_visitante;
-        
-                    if (!competencias[partido.competencia]) competencias[partido.competencia] = 0;
-                    competencias[partido.competencia]++;
-        
-                    if (local.toLowerCase().includes("river") || visitante.toLowerCase().includes("river")) {
-                        riverPartidos++;
-                    } else {
-                        otrosPartidos++;
-                    }
-        
-                    if (!ultimoPartidoFecha || new Date(partido.fecha) > new Date(ultimoPartidoFecha)) {
-                        ultimoPartidoFecha = partido.fecha;
-                    }
-                });
 
-                // Si la tabla ya está inicializada, la destruimos antes de volver a inicializar
-                if ($.fn.DataTable.isDataTable('#tablaPartidos')) {
-                    $('#tablaPartidos').DataTable().destroy();
-                }
-                
-                // Inicializar la tabla principal
-                $('#tablaPartidos').DataTable({
-                    data: data,
-                    columns: [
-                        { data: 'local' },
-                        { data: 'visitante' },
-                        { data: 'gol_local' },
-                        { data: 'gol_visitante' },
-                        { data: 'competencia' },
-                        { data: 'fecha' }
-                    ],
-                    "paging": true,
-                    "searching": true,
-                    "ordering": true,
-                    "order": [[5, "desc"]],  // Ordenar por fecha descendente
-                    "pageLength": 5,
-                    "lengthChange": false,
-                    "language": {
-                        "zeroRecords": "No se encontraron partidos",
-                        "info": "Mostrando _START_ a _END_ de _TOTAL_ partidos",
-                        "infoEmpty": "No hay partidos disponibles",
-                        "search": "Buscar:",
-                        "paginate": {
-                            "first": "Primero",
-                            "last": "Último",
-                            "next": "➡️",
-                            "previous": "⬅️"
-                        }
-                    }
-                });
-        
-                // ✅ Actualizar estadísticas en pantalla
-                document.getElementById("totalPartidos").innerText = totalPartidos;
-                document.getElementById("partidosPorAno").innerText = Object.keys(partidosPorAno)
-                    .map(a => `${a}: ${partidosPorAno[a]}`)
-                    .join(', ');
-                document.getElementById("ultimoPartido").innerText = ultimoPartidoFecha;
-        
-                // ✅ Verificación de datos antes de generar gráficos
-                if (Object.keys(equipos).length > 0) {
-                    new Chart(document.getElementById('graficoGoles'), {
-                        type: 'bar',
-                        data: {
-                            labels: Object.keys(equipos),
-                            datasets: [{
-                                label: 'Goles Totales',
-                                data: Object.values(equipos),
-                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: { responsive: true, scales: { y: { beginAtZero: true } } }
-                    });
-                }
-        
-                if (Object.keys(competencias).length > 0) {
-                    new Chart(document.getElementById('graficoCompetencias'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: Object.keys(competencias),
-                            datasets: [{
-                                data: Object.values(competencias),
-                                backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff']
-                            }]
-                        },
-                        options: { responsive: true }
-                    });
-                }
-        
-                if (riverPartidos + otrosPartidos > 0) {
-                    new Chart(document.getElementById('graficoRiver'), {
-                        type: 'pie',
-                        data: {
-                            labels: ["Partidos con River", "Otros partidos"],
-                            datasets: [{
-                                data: [riverPartidos, otrosPartidos],
-                                backgroundColor: ['#ff0000', '#cccccc']
-                            }]
-                        },
-                        options: { responsive: true }
-                    });
-                }
-            })
-            .catch(error => console.error('❌ Error en fetch:', error));
-        });        
+    <script>
+        fetch('/estadisticas_partidos')
+        .then(response => response.json())
+        .then(data => {
+            console.log("✅ Datos recibidos:", data);
+
+            // Actualizar el total de partidos
+            document.getElementById("totalPartidos").innerText = data.total_partidos;
+
+            // Actualizar partidos por año en formato legible
+            document.getElementById("partidosPorAno").innerText = Object.entries(data.partidos_por_ano)
+                .map(([anio, cantidad]) => `${anio}: ${cantidad}`)
+                .join(', ');
+        })
+        .catch(error => console.error("❌ Error al cargar las estadísticas:", error));
     </script>
+
+    <script>
+        fetch('/goles_river_anio')
+        .then(response => response.json())
+        .then(data => {
+            console.log("Datos recibidos:", data); // 👀 Verifica en la consola si llegan los datos correctos
+    
+            let anios = Object.keys(data.goles_por_anio);
+            let goles = Object.values(data.goles_por_anio);
+    
+            // ⚽ Crear gráfico
+            const ctx = document.getElementById('graficoGoles').getContext('2d');
+            
+            if (window.graficoGoles) {
+                window.graficoGoles.destroy(); // Destruir gráfico anterior si existe
+            }
+    
+            window.graficoGoles = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: anios,
+                    datasets: [{
+                        label: 'Goles de River por Año',
+                        data: goles,
+                        borderColor: '#ff0000',
+                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                        borderWidth: 2,
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: 'Año' } },
+                        y: { title: { display: true, text: 'Goles' }, beginAtZero: true }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error("Error al cargar el gráfico:", error));    
+    </script>
+
+    <script>
+        fetch('/partidos_por_competencia')
+        .then(response => response.json())
+        .then(data => {
+            console.log("✅ Datos recibidos:", data);
+
+            if (!data.competencias || data.competencias.length === 0) {
+                console.warn("⚠️ No hay datos para mostrar en el gráfico de competencias.");
+                return;
+            }
+
+            let labels = data.competencias.map(c => c.competencia);
+            let valores = data.competencias.map(c => c.cantidad);
+
+            let ctx = document.getElementById('graficoCompetencias').getContext('2d');
+
+            // Verifica si ya existe un gráfico y lo destruye antes de crear uno nuevo
+            if (window.graficoCompetencias instanceof Chart) {
+                window.graficoCompetencias.destroy();
+            }
+
+            window.graficoCompetencias = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error("❌ Error al cargar los datos:", error));               
+    </script>
+
+    <script>
+        fetch('/partidos_local_vs_no_local')
+        .then(response => response.json())
+        .then(data => {
+            console.log("✅ Datos recibidos:", data);  // Depuración en consola
+    
+            let canvas = document.getElementById("graficoLocalNoLocal");
+            let ctx = canvas.getContext("2d");
+    
+            // 🛠️ Verificar si ya existe un gráfico antes de destruirlo correctamente
+            if (window.graficoLocalNoLocal instanceof Chart) {
+                window.graficoLocalNoLocal.destroy();
+            }
+    
+            window.graficoLocalNoLocal = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ["River Local", "Otros Partidos"],
+                    datasets: [{
+                        data: [data.river_local, data.no_river_local],
+                        backgroundColor: ['#ff0000', '#cccccc']
+                    }]
+                },
+                options: { responsive: true }
+            });
+        })
+        .catch(error => console.error("❌ Error al cargar los datos del gráfico:", error));    
+    </script>
+
         
     <script>
         //obtener el ultimo partido
