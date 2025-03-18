@@ -525,6 +525,51 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">🏠 Efectividad de River como Local</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Total</div>
+                                            <div id="totalPartidosLocal" class="stat-value">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Victorias</div>
+                                            <div id="victoriasLocal" class="stat-value victorias">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Empates</div>
+                                            <div id="empatesLocal" class="stat-value empates">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Derrotas</div>
+                                            <div id="derrotasLocal" class="stat-value derrotas">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mb-4">
+                                    <div class="stat-label">Efectividad</div>
+                                    <div id="efectividadLocal" class="stats-value efectividad">%</div>
+                                </div>
+                                
+                                <div class="chart-container">
+                                    <canvas id="graficoLocal"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                    
                 </div>
             </div>
         </div>
@@ -1138,6 +1183,53 @@
                     });
                 })
                 .catch(error => console.error("Error al cargar datos del gráfico:", error));
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/efectividad_local')
+                .then(response => response.json())
+                .then(data => {
+                    // Actualizar valores en la UI
+                    document.getElementById("totalPartidosLocal").textContent = data.total_local;
+                    document.getElementById("victoriasLocal").textContent = data.victorias_local;
+                    document.getElementById("empatesLocal").textContent = data.empates_local;
+                    document.getElementById("derrotasLocal").textContent = data.derrotas_local;
+                    document.getElementById("efectividadLocal").textContent = data.efectividad_local + "%";
+    
+                    // Datos para el gráfico
+                    let ctx = document.getElementById("graficoLocal").getContext("2d");
+                    new Chart(ctx, {
+                        type: "bar",
+                        data: {
+                            labels: ["Victorias", "Empates", "Derrotas"],
+                            datasets: [{
+                                label: "Cantidad de Partidos",
+                                data: [data.victorias_local, data.empates_local, data.derrotas_local],
+                                backgroundColor: ["#28a745", "#ffc107", "#dc3545"],
+                                borderColor: ["#1e7e34", "#d39e00", "#bd2130"],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                x: {
+                                    title: { display: true, text: "Resultados" }
+                                },
+                                y: {
+                                    title: { display: true, text: "Cantidad" },
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error("Error al cargar datos:", error));
         });
     </script>
 

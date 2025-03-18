@@ -358,6 +358,40 @@ def partidos_comparacion():
     return jsonify(data)
 
 
+@app.route('/efectividad_local')
+def efectividad_local():
+    # Total de partidos en los que River fue LOCAL
+    total_local = db.session.query(db.func.count(Partido.id))\
+        .filter(Partido.local == "River").scalar() or 0
+
+    # Partidos ganados por River como LOCAL (más goles que el visitante)
+    victorias_local = db.session.query(db.func.count(Partido.id))\
+        .filter(Partido.local == "River", Partido.gol_local > Partido.gol_visitante).scalar() or 0
+
+    # Partidos empatados por River como LOCAL (mismos goles)
+    empates_local = db.session.query(db.func.count(Partido.id))\
+        .filter(Partido.local == "River", Partido.gol_local == Partido.gol_visitante).scalar() or 0
+
+    # Partidos perdidos por River como LOCAL
+    derrotas_local = total_local - (victorias_local + empates_local)
+
+    # Calcular efectividad (% de puntos obtenidos)
+    puntos_obtenidos = (victorias_local * 3) + (empates_local * 1)
+    puntos_totales = total_local * 3  # Cada partido otorga un máximo de 3 puntos
+
+    efectividad_local = (puntos_obtenidos / puntos_totales) * 100 if puntos_totales > 0 else 0
+
+    # Construir la respuesta en JSON
+    data = {
+        "total_local": total_local,
+        "victorias_local": victorias_local,
+        "empates_local": empates_local,
+        "derrotas_local": derrotas_local,
+        "efectividad_local": round(efectividad_local, 2)  # Redondeado a 2 decimales
+    }
+
+    return jsonify(data)
+
 
 
 # Iniciar la aplicación
